@@ -39,8 +39,10 @@ class Jwt {
       $this->expire = $config['expire'];
    }
 
-   public function encode(array $payload, string $secret = $this->secret, string $algorithm = $this->algorithm, array $header = [], ?string $kid = null): string {
+   public function encode(array $payload, ?string $secret = null, ?string $algorithm = null, array $header = [], ?string $kid = null): string {
       $this->checkAlgorithm($algorithm);
+      $secret = $secret ?? $this->secret;
+      $algorithm = $algorithm ?? $this->algorithm;
 
       $header = array_merge([
          'typ' => 'JWT',
@@ -63,7 +65,8 @@ class Jwt {
       return "$headerEncoded.$payloadEncoded." . $this->base64UrlEncode($signatureEncoded);
    }
 
-   public function decode(string $token, $key = $this->secret): object {
+   public function decode(string $token, ?string $secret = null): object {
+      $secret = $secret ?? $this->secret;
       $parts = explode('.', $token);
       if (count($parts) !== 3) {
          throw new ExceptionHandler('Error', 'Invalid token structure');
@@ -80,7 +83,7 @@ class Jwt {
          return ($this->resolver)($header->kid ?? null);
       }
 
-      if ($this->verifySignature("$headerEncoded.$payloadEncoded", $signature, $key, $header->alg) === false) {
+      if ($this->verifySignature("$headerEncoded.$payloadEncoded", $signature, $secret, $header->alg) === false) {
          throw new ExceptionHandler('Error', 'Signature verification failed');
       }
 

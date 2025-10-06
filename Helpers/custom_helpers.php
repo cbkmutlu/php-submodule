@@ -229,12 +229,12 @@ if (!function_exists('import_config')) {
 
 if (!function_exists('import_env')) {
    function import_env(string $file = '.env'): void {
-      $file = ROOT_DIR . '/' . $file;
-      if (!file_exists($file)) {
-         return;
+      $path = ROOT_DIR . '/' . $file;
+      if (!file_exists($path)) {
+         throw new SystemException("File not found [{$file}]");
       }
 
-      $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+      $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
       foreach ($lines as $line) {
          if (str_starts_with(trim($line), '#')) {
             continue;

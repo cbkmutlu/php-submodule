@@ -44,6 +44,8 @@ class Cli {
 
       if ($command === 'serve') {
          return $this->serve($param1);
+      } else if ($command === 'module') {
+         return $this->module($param1);
       } else if ($command === 'hash' && $param1) {
          return $this->hash($param1);
       } else if ($command === 'key') {
@@ -94,6 +96,23 @@ class Cli {
       return $this->success('Key: ' . $data);
    }
 
+   private function module(string $module): string {
+      $path = "App/Modules/$module";
+      if (file_exists("$path/{$module}Controller.php")) {
+         return $this->error('Module already exists: ' . $path);
+      }
+
+      $this->dir($path);
+      $list = ['Controller', 'Service', 'Repository', 'Request', 'Response'];
+      foreach ($list as $item) {
+         $template = file_get_contents("System/Cli/$item.temp");
+         $content = str_replace('{class}', $module, $template);
+         file_put_contents("$path/{$module}{$item}.php", $content);
+      }
+
+      return $this->success('Module successfully created: ' . $path);
+   }
+
    public function migration(string $param1, ?string $param2 = null): string {
       if ($param1 === 'refresh') {
          $this->migration('reset');
@@ -131,7 +150,7 @@ class Cli {
          }
 
          $file = $location . '/' . $name . '.php';
-         $template = file_get_contents('System/Migration/migration.temp');
+         $template = file_get_contents('System/Cli/migration.temp');
          $content = str_replace('{class}', $class, $template);
          $this->dir($location);
          file_put_contents($file, $content);

@@ -1,0 +1,25 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\{class};
+
+use System\Database\Database;
+use System\Validation\Validation;
+use App\Core\Abstracts\BaseService;
+use System\Exception\SystemException;
+use App\Modules\{class}\{class}Request;
+use App\Modules\{class}\{class}Repository;
+
+class {class}Service extends BaseService {
+   /** @var {class}Repository */
+   protected mixed $repository;
+
+   public function __construct(
+      protected Database $database,
+      protected Validation $validation,
+      {class}Repository $repository,
+   ) {
+      $this->repository = $repository;
+   }
+}

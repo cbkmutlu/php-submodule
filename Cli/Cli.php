@@ -9,8 +9,6 @@ class Cli {
    private $colors;
 
    public function __construct() {
-      $config = import_config('defines.app');
-      import_env($config['env']);
       $this->colors['black']         = '0;30';
       $this->colors['dark_gray']     = '1;30';
       $this->colors['blue']          = '0;34';
@@ -27,6 +25,14 @@ class Cli {
       $this->colors['yellow']        = '1;33';
       $this->colors['light_gray']    = '0;37';
       $this->colors['white']         = '1;37';
+
+      try {
+         $config = import_config('defines.app');
+         import_env($config['env']);
+      } catch (\Throwable $th) {
+         print($this->error($th->getMessage()));
+         exit();
+      }
    }
 
    public function run(array $params): string {

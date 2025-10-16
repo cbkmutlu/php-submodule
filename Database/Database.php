@@ -278,7 +278,15 @@ class Database {
 
       foreach ($data as $key => $value) {
          if (is_array($value)) {
-            $conditions[] = "`{$key}` {$value[0]}";
+            if ($value[0] === 'IN') {
+               if (is_array($value[1])) {
+                  $conditions[] = "`{$key}` IN (" . implode(',', $value[1]) . ")";
+               } else {
+                  $conditions[] = "`{$key}` IN ({$this->escape($value[1])})";
+               }
+            } else {
+               $conditions[] = "`{$key}` {$value[0]}";
+            }
          } else {
             $conditions[] = "`{$key}` = :{$key}";
          }
@@ -297,6 +305,7 @@ class Database {
       return $this;
    }
 
+
    public function update(array $data): self {
       $clauses = [];
 
@@ -310,6 +319,29 @@ class Database {
 
       $clauses = implode(', ', $clauses);
       $this->query = "UPDATE {$this->table} SET {$clauses}";
+      return $this;
+   }
+
+   public function updateCase(string $column, array $items, string $where = 'id'): self {
+      if (empty($items)) {
+         throw new DatabaseException('Items array cannot be empty');
+      }
+
+      $cases = [];
+      $ids = [];
+
+      foreach ($items as $item) {
+         $id = is_object($item) ? $item->{$where} : $item[$where];
+         $value = is_object($item) ? $item->{$column} : $item[$column];
+
+         $ids[] = $id;
+         $cases[] = "WHEN {$id} THEN {$this->escape((string)$value)}";
+      }
+
+      $case = implode(' ', $cases);
+      $in = implode(',', $ids);
+
+      $this->query = "UPDATE {$this->table} SET `{$column}` = CASE `{$where}` {$case} END WHERE `{$where}` IN ({$in})";
       return $this;
    }
 

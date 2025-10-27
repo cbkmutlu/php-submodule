@@ -109,16 +109,24 @@ class Database {
 
    public function execute(array $params = []): self {
       try {
-         if ($this->debug) {
-            print_r($params);
-            $this->debug = false;
-            exit();
-         }
-
          if ($this->positional) {
             $this->state->execute();
          } else {
-            $this->state->execute($params);
+            // $params = [
+            //    'id' => 6,
+            //    'image' => ['IS NOT NULL']
+            // ];
+            $filter = array_filter($params, function ($value) {
+               return !is_array($value);
+            });
+
+            if ($this->debug) {
+               print_r($params);
+               print_r($filter);
+               $this->debug = false;
+               exit();
+            }
+            $this->state->execute($filter);
          }
 
          $this->total++;

@@ -330,26 +330,21 @@ class Database {
       return $this;
    }
 
-   public function updateCase(string $column, array $items, string $where = 'id'): self {
+   public function updateCase(array $items, string $column, string $where): self {
       if (empty($items)) {
          throw new DatabaseException('Items array cannot be empty');
       }
 
       $cases = [];
-      $ids = [];
-
       foreach ($items as $item) {
          $id = is_object($item) ? $item->{$where} : $item[$where];
          $value = is_object($item) ? $item->{$column} : $item[$column];
 
-         $ids[] = $id;
          $cases[] = "WHEN {$id} THEN {$this->escape((string)$value)}";
       }
 
-      $case = implode(' ', $cases);
-      $in = implode(',', $ids);
-
-      $this->query = "UPDATE {$this->table} SET `{$column}` = CASE `{$where}` {$case} END WHERE `{$where}` IN ({$in})";
+      $cases = implode(' ', $cases);
+      $this->query = "UPDATE {$this->table} SET `{$column}` = CASE `{$where}` {$cases} END";
       return $this;
    }
 

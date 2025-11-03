@@ -276,7 +276,7 @@ class Database {
 
    public function table(string $table): self {
       $this->pdo();
-      $this->table = $table;
+      $this->table = "`{$table}`";
 
       return $this;
    }

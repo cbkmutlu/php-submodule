@@ -215,7 +215,7 @@ class Database {
 
             $constant = constant($mode);
 
-            if ($constant === PDO::FETCH_CLASS && $args) {
+            if (($constant === PDO::FETCH_CLASS || $constant === PDO::FETCH_COLUMN) && !is_null($args)) {
                $this->state->setFetchMode($constant, $args);
             } else {
                $this->state->setFetchMode($constant);

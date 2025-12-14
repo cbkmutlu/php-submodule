@@ -92,12 +92,6 @@ class Database {
          $this->query = $query;
       }
 
-      if ($this->debug) {
-         print_r($this->query . "\n");
-         $this->debug = false;
-         exit();
-      }
-
       try {
          $this->positional = false;
          $this->state = $this->pdo()->prepare($this->query);
@@ -112,17 +106,16 @@ class Database {
          if ($this->positional) {
             $this->state->execute();
          } else {
-            // $params = [
-            //    'id' => 6,
-            //    'image' => ['IS NOT NULL']
-            // ];
             $filter = array_filter($params, function ($value) {
                return !is_array($value);
             });
 
             if ($this->debug) {
-               print_r($params);
+               echo "<pre>";
+               print_r($this->query);
+               echo "\n----------------------------------------\n";
                print_r($filter);
+               echo "</pre>";
                $this->debug = false;
                exit();
             }
@@ -153,8 +146,20 @@ class Database {
       }
    }
 
-   public function escape(string $data): string {
+   public function escape(mixed $data): string {
       try {
+         if ($data === null) {
+            return 'NULL';
+         }
+
+         if (is_int($data) || is_float($data)) {
+            return (string)$data;
+         }
+
+         if (is_bool($data)) {
+            return $data ? '1' : '0';
+         }
+
          return $this->pdo()->quote($data);
       } catch (PDOException $e) {
          throw new DatabaseException('Escape ' . $e->getMessage());
@@ -232,9 +237,9 @@ class Database {
       return $this->fetchAll($fetch, $args, false);
    }
 
-   public function lastInsertId(): string {
+   public function lastInsertId(bool $int = true): int|string {
       try {
-         return $this->pdo()->lastInsertId();
+         return $int ? (int) $this->pdo()->lastInsertId() : $this->pdo()->lastInsertId();
       } catch (PDOException $e) {
          throw new DatabaseException('Get Last Id ' . $e->getMessage());
       }
@@ -276,8 +281,43 @@ class Database {
 
    public function table(string $table): self {
       $this->pdo();
-      $this->table = "`{$table}`";
 
+      // table as alias
+      if (preg_match('/^([a-zA-Z0-9_]+)\s+(?:AS\s+)?([a-zA-Z0-9_]+)$/i', $table, $matches)) {
+         $this->table = "`{$matches[1]}` AS {$matches[2]}";
+      }
+
+      // table
+      else {
+         $this->table = "`{$table}`";
+      }
+
+      return $this;
+   }
+
+   public function select(array $data = ['*']): self {
+      $select = rtrim(implode(', ', $data));
+      $this->query = "SELECT {$select} FROM {$this->table}";
+      return $this;
+   }
+
+   public function orderBy(?array $data = null): self {
+      if (!is_null($data)) {
+         $orderBy = [];
+         foreach ($data as $key => $value) {
+            // (column = value)
+            if (preg_match('/^\((\w+)\s*=\s*(\d+)\)$/', $key, $matches)) {
+               $col = $matches[1];
+               $num = $matches[2];
+               $orderBy[] = "(`{$col}` = {$num})";
+               continue;
+            }
+
+            // column value
+            $orderBy[] = "`{$key}` {$value}";
+         }
+         $this->query .= " ORDER BY " . implode(', ', $orderBy);
+      }
       return $this;
    }
 
@@ -285,17 +325,37 @@ class Database {
       $conditions = [];
 
       foreach ($data as $key => $value) {
+         // key => [value]
          if (is_array($value)) {
+
+            // key => ['IN', value]
             if ($value[0] === 'IN') {
+
+               // key => ['IN', [value]]
                if (is_array($value[1])) {
-                  $conditions[] = "`{$key}` IN (" . implode(',', $value[1]) . ")";
-               } else {
+                  $escape = [];
+                  foreach ($value[1] as $column) {
+                     $escape[] = $this->escape($column);
+                  }
+                  $escape = implode(',', $escape);
+
+                  $conditions[] = "`{$key}` IN ({$escape})";
+               }
+
+               // key => ['IN', value]
+               else {
                   $conditions[] = "`{$key}` IN ({$this->escape($value[1])})";
                }
-            } else {
+            }
+
+            // key => ['IS NULL']
+            else {
                $conditions[] = "`{$key}` {$value[0]}";
             }
-         } else {
+         }
+
+         // key => value
+         else {
             $conditions[] = "`{$key}` = :{$key}";
          }
       }
@@ -307,21 +367,42 @@ class Database {
       return $this;
    }
 
-   public function select(array $data = ['*']): self {
-      $select = rtrim(implode(', ', $data));
-      $this->query = "SELECT {$select} FROM {$this->table}";
-      return $this;
-   }
-
-
    public function update(array $data): self {
       $clauses = [];
-
       foreach ($data as $key => $value) {
-         if (is_int($key)) {
+         // key => [value]
+         if (is_array($value)) {
+
+            // key => ['CASE', columns, rows]
+            if (is_string($value[0]) && $value[0] === 'CASE') {
+               $cases = [];
+               foreach ($value[2] as $row) {
+                  $cases[] = "WHEN {$this->escape($row[$value[1]])} THEN {$this->escape($row[$key])}";
+               }
+
+               $cases = implode(' ', $cases);
+               $clauses[] = "`{$key}` = CASE `{$value[1]}` {$cases} END";
+            }
+
+            // key => ['NOW()']
+            else if (is_string($value[0]) && preg_match('/^NOW(\(\d+\))?$/i', $value[0])) {
+               $clauses[] = "`{$key}` = {$value[0]}";
+            }
+
+            // key => [value]
+            else {
+               $clauses[] = "`{$key}` = {$this->escape($value[0])}";
+            }
+         }
+
+         // key
+         else if (is_int($key)) {
             $clauses[] = "`{$value}` = :{$value}";
-         } else {
-            $clauses[] = "`{$key}` = {$this->escape((string)$value)}";
+         }
+
+         // key => value
+         else {
+            $clauses[] = "`{$key}` = :{$key}";
          }
       }
 
@@ -330,41 +411,50 @@ class Database {
       return $this;
    }
 
-   public function updateCase(array $items, string $column, string $where): self {
-      if (empty($items)) {
-         throw new DatabaseException('Items array cannot be empty');
-      }
-
-      $cases = [];
-      foreach ($items as $item) {
-         $id = is_object($item) ? $item->{$where} : $item[$where];
-         $value = is_object($item) ? $item->{$column} : $item[$column];
-
-         $cases[] = "WHEN {$id} THEN {$this->escape((string)$value)}";
-      }
-
-      $cases = implode(' ', $cases);
-      $this->query = "UPDATE {$this->table} SET `{$column}` = CASE `{$where}` {$cases} END";
-      return $this;
-   }
-
    public function insert(array $data): self {
-      $columns = [];
-      $values = [];
-
-      foreach ($data as $key => $value) {
-         if (is_int($key)) {
-            $columns[] = "`{$value}`";
-            $values[] = ":{$value}";
-         } else {
-            $columns[] = "`{$key}`";
-            $values[] = "{$this->escape((string)$value)}";
+      // key => [[value], [value]]
+      if (array_is_list($data)) {
+         $columns = '`' . implode('`, `', array_keys(reset($data))) . '`';
+         $values = [];
+         foreach ($data as $row) {
+            $escape = [];
+            foreach ($row as $key => $value) {
+               $escape[] = $this->escape($value);
+            }
+            $values[] = '(' . implode(', ', $escape) . ')';
          }
+
+         $values = implode(', ', $values);
       }
 
-      $columns = implode(', ', $columns);
-      $values = implode(', ', $values);
-      $this->query = "INSERT INTO {$this->table} ({$columns}) VALUES ({$values})";
+      // key => [value]
+      else {
+         $columns = '`' . implode('`, `', array_keys($data)) . '`';
+         $values = [];
+         foreach ($data as $key => $value) {
+            // key => [value]
+            if (is_array($value)) {
+
+               // key => ['NOW()']
+               if (is_string($value[0]) && preg_match('/^NOW(\(\d+\))?$/i', $value[0])) {
+                  $values[] = $value[0];
+               }
+
+               // key => [value]
+               else {
+                  $values[] = $this->escape($value[0]);
+               }
+            }
+
+            // key => value
+            else {
+               $values[] = ":{$key}";
+            }
+         }
+         $values = '(' . implode(', ', $values) . ')';
+      }
+
+      $this->query = "INSERT INTO {$this->table} ({$columns}) VALUES {$values}";
       return $this;
    }
 

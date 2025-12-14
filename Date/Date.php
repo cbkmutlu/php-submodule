@@ -48,8 +48,6 @@ class Date {
       $this->calendar = $config['calendar'];
 
       $this->formatter = new IntlDateFormatter($this->locale, $this->date_type, $this->time_type, $this->timezone, $this->calendar, $this->pattern);
-      $this->datetime = date_create('now', new DateTimeZone($this->timezone));
-      $this->timestamp = $this->datetime->getTimestamp();
    }
 
    public function getDate(?string $pattern = null): string {
@@ -57,7 +55,7 @@ class Date {
       return $this->formatter->format($this->datetime);
    }
 
-   public function getTimestamp(bool $micro = true): int {
+   public function getTimestamp(bool $micro = false): int {
       return $micro ? ($this->datetime->getTimestamp() * 1000) + intval($this->datetime->format("u") / 1000) : $this->datetime->getTimestamp();
    }
 
@@ -71,7 +69,7 @@ class Date {
 
    public function getMonthString(bool $short = false): string {
       $this->formatter->setPattern($short ? 'MMM' : 'MMMM');
-      return $this->formatter->format($this->timestamp);
+      return $this->formatter->format($this->datetime);
    }
 
    public function getDay(): string {
@@ -80,7 +78,7 @@ class Date {
 
    public function getDayString(bool $short = false): string {
       $this->formatter->setPattern($short ? 'EEE' : 'EEEE');
-      return $this->formatter->format($this->timestamp);
+      return $this->formatter->format($this->datetime);
    }
 
    public function getHour(bool $mode = true): string {
@@ -88,14 +86,14 @@ class Date {
    }
 
    public function getMinute(): string {
-      return $this->datetime->format('m');
+      return $this->datetime->format('i');
    }
 
    public function getSecond(): string {
       return $this->datetime->format('s');
    }
 
-   public function getMiliSecond(): string {
+   public function getMicroSecond(): string {
       return $this->datetime->format('u');
    }
 
@@ -115,15 +113,8 @@ class Date {
       return $this->datetime->format('t');
    }
 
-   public function isLeapYear(): string {
-      return $this->datetime->format('L');
-   }
-
-   public function now(): self {
-      $clone = clone $this;
-      $clone->datetime = date_create('now', new DateTimeZone($clone->timezone));
-      $clone->timestamp = $clone->datetime->getTimestamp();
-      return $clone;
+   public function isLeapYear(): bool {
+      return (bool) $this->datetime->format('L');
    }
 
    public function setDate(mixed $date, ?string $format = null): self {
@@ -145,8 +136,9 @@ class Date {
       return $clone;
    }
 
-   public function setTimestamp(int $timestamp): self {
+   public function setTimestamp(int|float $timestamp): self {
       $this->timestamp = $timestamp;
+      $this->datetime = date_create_from_format('U.u', sprintf('%.6F', $timestamp));
       return $this;
    }
 

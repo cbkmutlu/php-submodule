@@ -114,10 +114,14 @@ class ExceptionHandler {
       header('Access-Control-Allow-Credentials: ' . $config['allow-credentials']);
       header('Content-Type: text/html; charset=UTF-8');
 
-      $whoops = new WhoopsRun;
-      $whoops->pushHandler(new WhoopsPrettyPageHandler);
-      $whoops->register();
-      $whoops->sendHttpCode($code);
-      throw $exception;
+      if (ENV === 'production') {
+         throw $exception;
+      } else {
+         $whoops = new WhoopsRun;
+         $whoops->pushHandler(new WhoopsPrettyPageHandler);
+         $whoops->register();
+         $whoops->sendHttpCode($code);
+         throw $exception;
+      }
    }
 }

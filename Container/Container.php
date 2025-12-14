@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace System\Container;
 
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionNamedType;
 use System\Exception\SystemException;
 
@@ -29,7 +30,7 @@ class Container {
 
          $this->services[$key] = [
             'definition' => function () use ($name) {
-               return $this->resolve($name);
+               return $this->resolveClass($name);
             },
             'singleton' => $singleton,
          ];
@@ -70,7 +71,7 @@ class Container {
       return $instance;
    }
 
-   public function resolve(string $class): object {
+   public function resolveClass(string $class): object {
       if (!isset($this->reflections[$class])) {
          $this->reflections[$class] = new ReflectionClass($class);
       }
@@ -109,7 +110,7 @@ class Container {
                }
             }
 
-            return $this->resolve($type->getName());
+            return $this->resolveClass($type->getName());
          }
 
          if ($parameter->isDefaultValueAvailable()) {
@@ -123,5 +124,40 @@ class Container {
       $constructor->invokeArgs($instance, $dependencies);
 
       return $instance;
+   }
+
+   public function resolveMethod(object $instance, string $method, array $params = []): array {
+      $reflection = new ReflectionMethod($instance, $method);
+      $final = [];
+
+      foreach ($reflection->getParameters() as $param) {
+         $type = $param->getType();
+         $name = $param->getName();
+
+         if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+            $final[] = $this->resolveClass($type->getName());
+            continue;
+         }
+
+         if (array_key_exists($name, $params)) {
+            $value = $params[$name];
+         } elseif (!empty($params)) {
+            $value = array_shift($params);
+         } elseif ($param->isDefaultValueAvailable()) {
+            $final[] = $param->getDefaultValue();
+            continue;
+         } else {
+            throw new SystemException("Cannot resolve method parameter [{$name}] in {$method}.");
+         }
+
+         if ($type instanceof ReflectionNamedType && $type->isBuiltin()) {
+            $builtinType = $type->getName();
+            settype($value, $builtinType);
+         }
+
+         $final[] = $value;
+      }
+
+      return $final;
    }
 }

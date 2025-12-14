@@ -178,7 +178,9 @@ class Router {
             if (!method_exists($controller, $method)) {
                throw new RouterException("Method not found [{$controller}::{$method}]");
             }
-            $instance = $this->container->resolve($controller);
+            $instance = $this->container->resolveClass($controller);
+            // $args = $this->container->resolveMethod($instance, $method, $params);
+            // $instance->$method(...$args);
             call_user_func_array([$instance, $method], array_values($params));
          } else {
             throw new RouterException("Invalid route callback");
@@ -190,7 +192,7 @@ class Router {
 
       foreach (array_reverse($middlewares) as $middleware) {
          if (class_exists($middleware)) {
-            $instance = $this->container->resolve($middleware);
+            $instance = $this->container->resolveClass($middleware);
             $current = $next;
             $next = function () use ($instance, $current) {
                return $instance->handle($current);

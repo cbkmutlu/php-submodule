@@ -12,6 +12,7 @@ class Request {
    private $files;
    private $server;
    private $cookie;
+   private $user;
 
    public function __construct() {
       $this->get = $_GET;
@@ -19,6 +20,15 @@ class Request {
       $this->cookie = $_COOKIE;
       $this->files = $_FILES;
       $this->server = $_SERVER;
+   }
+
+   public function user(?array $data = null): array {
+      if (is_null($data)) {
+         return $this->user;
+      }
+
+      $this->user = $data;
+      return $this->user;
    }
 
    public function get(?string $param = null, $filter = true): mixed {
@@ -184,11 +194,11 @@ class Request {
    }
 
    public function authorization(): string {
-      $headers = null;
+      $auth = null;
       if ($this->server('Authorization')) {
-         $headers = $this->server["Authorization"];
+         $auth = $this->server["Authorization"];
       } else if ($this->server('HTTP_AUTHORIZATION')) {
-         $headers = $this->server["HTTP_AUTHORIZATION"];
+         $auth = $this->server['HTTP_AUTHORIZATION'];
       } else {
          if (function_exists('apache_request_headers')) {
             $headers = apache_request_headers();
@@ -198,11 +208,32 @@ class Request {
 
          $headers = array_combine(array_map('ucwords', array_keys($headers)), array_values($headers));
          if (isset($headers['Authorization'])) {
-            $headers = $headers['Authorization'];
+            $auth = $headers['Authorization'];
          }
       }
 
-      return trim($headers);
+      return is_string($auth) ? trim($auth) : '';
+   }
+
+   public function bearer(): ?string {
+      $auth = $this->authorization();
+
+      if (!$auth) {
+         return null;
+      }
+
+      if (substr_count($auth, ' ') > 1) {
+         return null;
+      }
+
+      $auth = trim($auth);
+      [$type, $token] = array_pad(explode(' ', $auth, 2), 2, null);
+
+      if (strcasecmp($type, 'Bearer') !== 0 || !$token) {
+         return null;
+      }
+
+      return $token;
    }
 
    public function segments(?int $index = null): mixed {
@@ -233,32 +264,32 @@ class Request {
       return http_build_query($data);
    }
 
-   public function ip(): string {
-      if (getenv('HTTP_CLIENT_IP')) {
-         return getenv('HTTP_CLIENT_IP');
+   public function userAgent(): ?string {
+      return $this->server('HTTP_USER_AGENT') ?? null;
+   }
+
+   public function userIp(): string {
+      $headers = [
+         'HTTP_CF_CONNECTING_IP',
+         'HTTP_X_FORWARDED_FOR',
+         'HTTP_FORWARDED_FOR',
+         'HTTP_FORWARDED',
+         'HTTP_X_REAL_IP',
+         'HTTP_CLIENT_IP',
+         'REMOTE_ADDR'
+      ];
+
+      foreach ($headers as $header) {
+         if (!empty($this->server($header))) {
+            $ip = ($header === 'HTTP_X_FORWARDED_FOR') ? explode(',', $this->server($header))[0] : $this->server($header);
+
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+               return $ip;
+            }
+         }
       }
 
-      if (getenv('HTTP_X_FORWARDED_FOR')) {
-         return getenv('HTTP_X_FORWARDED_FOR');
-      }
-
-      if (getenv('HTTP_X_FORWARDED')) {
-         return getenv('HTTP_X_FORWARDED');
-      }
-
-      if (getenv('HTTP_FORWARDED_FOR')) {
-         return getenv('HTTP_FORWARDED_FOR');
-      }
-
-      if (getenv('HTTP_FORWARDED')) {
-         return getenv('HTTP_FORWARDED');
-      }
-
-      if (getenv('REMOTE_ADDR')) {
-         return getenv('REMOTE_ADDR');
-      }
-
-      return 'UNKNOWN';
+      return $this->server('REMOTE_ADDR') ?? '0.0.0.0';
    }
 
    public function filter(mixed $data = null, bool $filter = false): mixed {
@@ -273,7 +304,9 @@ class Request {
          return $data;
       }
 
-      return escape_xss($data);
+      return $data;
+      // return trim(htmlspecialchars($data, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+      // return escape_xss($data);
    }
 
    public function isUri(): bool {

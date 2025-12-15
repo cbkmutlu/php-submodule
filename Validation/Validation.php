@@ -68,9 +68,9 @@ class Validation {
    }
 
    /**
-    * Validate the data
+    * Handle the validation
     */
-   public function validate(): bool {
+   public function handle(): bool {
       $this->errors = [];
 
       foreach ($this->rules as $field => $rules) {

@@ -119,7 +119,7 @@ class Session {
    public function csrf(?string $token = null): bool|string {
       if (is_null($token)) {
          if ($this->status()) {
-            $token = base64_encode(random_bytes(32));
+            $token = bin2hex(random_bytes(32));
             $this->save('session_csrf', $token);
             return $token;
          }

@@ -59,7 +59,7 @@ if (!function_exists('check_permission')) {
 }
 
 if (!function_exists('format_mask')) {
-   function format_mask(string $value, string $mask = "*"): string {
+   function format_mask(string $value, string $mask = '*'): string {
       if (filter_var($value, FILTER_VALIDATE_EMAIL) !== false) {
          [$name, $domain] = explode('@', $value, 2);
 
@@ -139,7 +139,7 @@ if (!function_exists('calculate_reading')) {
    }
 }
 
-// calculate_distance(32.9697, -96.80322, 29.46786, -98.53506, "M")
+// calculate_distance(32.9697, -96.80322, 29.46786, -98.53506, 'M')
 if (!function_exists('calculate_distance')) {
    function calculate_distance(float $lat1, float $lon1, float $lat2, float $lon2, string $unit): float {
       $theta = $lon1 - $lon2;
@@ -149,9 +149,9 @@ if (!function_exists('calculate_distance')) {
       $miles = $dist * 60 * 1.1515;
       $unit = strtoupper($unit);
 
-      if ($unit == "K") {
+      if ($unit == 'K') {
          return ($miles * 1.609344);
-      } else if ($unit == "N") {
+      } else if ($unit == 'N') {
          return ($miles * 0.8684);
       } else {
          return $miles;
@@ -205,25 +205,25 @@ if (!function_exists('escape_xss')) {
 
 if (!function_exists('escape_html')) {
    function escape_html(string $data): string {
-      return strip_tags(htmlentities(trim(stripslashes($data)), ENT_NOQUOTES, "UTF-8"));
+      return strip_tags(htmlentities(trim(stripslashes($data)), ENT_NOQUOTES, 'UTF-8'));
    }
 }
 
 if (!function_exists('import_asset')) {
    function import_asset(?string $file = null, mixed $version = null): mixed {
       if (!is_null($file)) {
-         if (!file_exists(ROOT_DIR . '/Public/' . $file)) {
-            throw new SystemException("File not found in Public directory [{$file}]");
+         if (!file_exists(PUBLIC_DIR . $file)) {
+            throw new SystemException('File not found in Public directory [' . $file . ']');
          }
 
          if (!is_null($version)) {
-            return ROOT_DIR . '/Public/' . $file . '?' . $version;
+            return PUBLIC_DIR . $file . '?' . $version;
          }
 
-         return ROOT_DIR . '/Public/' . $file;
+         return PUBLIC_DIR . $file;
       }
 
-      return ROOT_DIR . '/Public/';
+      return PUBLIC_DIR;
    }
 }
 
@@ -232,7 +232,7 @@ if (!function_exists('import_config')) {
       [$file, $value] = explode('.', $params, 2);
 
       if (!file_exists($path = APP_DIR . 'Config/' . ucwords($file) . '.php')) {
-         throw new SystemException("File not found in Config directory [{$path}]");
+         throw new SystemException('File not found in Config directory [' . $path . ']');
       }
 
       $config = require $path;
@@ -240,7 +240,7 @@ if (!function_exists('import_config')) {
 
       foreach ($keys as $key) {
          if (!isset($config[$key])) {
-            throw new SystemException("Invalid key [{$key}]");
+            throw new SystemException('Invalid key [' . $key . ']');
          }
          $config = $config[$key];
       }
@@ -251,9 +251,9 @@ if (!function_exists('import_config')) {
 
 if (!function_exists('import_env')) {
    function import_env(string $file = '.env'): void {
-      $path = ROOT_DIR . '/' . $file;
+      $path = ROOT_DIR . $file;
       if (!file_exists($path)) {
-         throw new SystemException("File not found [{$file}]");
+         throw new SystemException('File not found [' . $file . ']');
       }
 
       $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -265,7 +265,7 @@ if (!function_exists('import_env')) {
          [$key, $value] = explode('=', $line, 2);
          $key = trim($key);
          $value = trim($value, "'\"");
-         putenv("$key=$value");
+         putenv($key . '=' . $value);
       }
    }
 }
@@ -371,7 +371,7 @@ if (!function_exists('uri_parse')) {
 
 if (!function_exists('url_route')) {
    function url_route(string $name, array $params = []): string {
-      return BASE_DIR . '/' . Router::url($name, $params);
+      return BASE_URL . '/' . Router::url($name, $params);
    }
 }
 
@@ -732,7 +732,7 @@ if (!function_exists('url_slug')) {
 }
 
 if (!function_exists('turkish_suffix')) {
-   function turkish_suffix(string $name, string $suffixType = "in"): string {
+   function turkish_suffix(string $name, string $suffixType = 'in'): string {
       // Türkçe karakter setleri
       $hardConsonants = ['ç', 'f', 'h', 'k', 'p', 's', 'ş', 't'];
       $vowels = ['a', 'e', 'ı', 'i', 'o', 'ö', 'u', 'ü'];
@@ -750,7 +750,7 @@ if (!function_exists('turkish_suffix')) {
 
       $suffix = '';
       switch ($suffixType) {
-         case "in": // iyelik eki -> Ahmet'in
+         case 'in': // iyelik eki -> Ahmet'in
             if (in_array($lastChar, $vowels)) {
                if (in_array($lastChar, ['a', 'ı'])) {
                   $suffix = "'nın";
@@ -774,7 +774,7 @@ if (!function_exists('turkish_suffix')) {
             }
             break;
 
-         case "e": // yönelme hali -> Ahmet'e
+         case 'e': // yönelme hali -> Ahmet'e
             if (in_array($lastChar, $vowels)) {
                if (in_array($lastChar, ['a', 'ı', 'o', 'u'])) {
                   $suffix = "'ya";
@@ -790,7 +790,7 @@ if (!function_exists('turkish_suffix')) {
             }
             break;
 
-         case "i": // belirtme hali -> Ahmet'i
+         case 'i': // belirtme hali -> Ahmet'i
             if (in_array($lastChar, $vowels)) {
                if (in_array($lastChar, ['a', 'ı'])) {
                   $suffix = "'yı";
@@ -814,7 +814,7 @@ if (!function_exists('turkish_suffix')) {
             }
             break;
 
-         case "de": // bulunma hali -> Ahmet'te / Ayşe'de
+         case 'de': // bulunma hali -> Ahmet'te / Ayşe'de
             if (in_array($lastChar, $hardConsonants)) {
                if (in_array($lastVowel, ['a', 'ı', 'o', 'u'])) {
                   $suffix = "'ta";
@@ -830,7 +830,7 @@ if (!function_exists('turkish_suffix')) {
             }
             break;
 
-         case "den": // ayrılma hali -> Ahmet'ten / Ayşe'den
+         case 'den': // ayrılma hali -> Ahmet'ten / Ayşe'den
             if (in_array($lastChar, $hardConsonants)) {
                if (in_array($lastVowel, ['a', 'ı', 'o', 'u'])) {
                   $suffix = "'tan";
@@ -846,7 +846,7 @@ if (!function_exists('turkish_suffix')) {
             }
             break;
 
-         case "le": // beraberlik hali -> Ayşeyle / Ahmetle
+         case 'le': // beraberlik hali -> Ayşeyle / Ahmetle
             if (in_array($lastChar, $vowels)) {
                if (in_array($lastChar, ['a', 'ı', 'o', 'u'])) {
                   $suffix = "'yla";

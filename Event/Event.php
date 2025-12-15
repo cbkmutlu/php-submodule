@@ -33,11 +33,11 @@ class Event {
    public function fire(): void {
       foreach ($this->listeners as $listener) {
          if (!class_exists($listener)) {
-            throw new SystemException("Listener class [{$listener}] not found");
+            throw new SystemException('Listener [' . $listener . '] not found');
          }
 
          if (!method_exists($listener, $this->action)) {
-            throw new SystemException("Listener method [{$this->action}] not found in class [{$listener}]");
+            throw new SystemException('Method [' . $this->action . '] not found in ' . $listener);
          }
 
          call_user_func_array([new $listener, $this->action], $this->params);

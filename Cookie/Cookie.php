@@ -30,26 +30,26 @@ class Cookie {
 
    public function save(string $name, string $content, int $time = 0): void {
       if ($time > 0) {
-         $time = time() + ($time * 60 * 60);
+         $time = time() + ($time * 60 * 60); // 60 seconds * 60 minutes * $time hours
       }
 
       if ($this->cookie_security) {
          setcookie($name, $content . $this->separator . hash_hmac('sha256', $content, $this->encryption_key), [
-            "expires" => $time,
-            "path" => $this->path,
-            "domain" => $this->domain,
-            "secure" => $this->secure,
-            "httponly" => $this->httponly,
-            "samesite" => $this->samesite
+            'expires'  => $time,
+            'path'     => $this->path,
+            'domain'   => $this->domain,
+            'secure'   => $this->secure,
+            'httponly' => $this->httponly,
+            'samesite' => $this->samesite
          ]);
       } else {
          setcookie($name, $content, [
-            "expires" => $time,
-            "path" => $this->path,
-            "domain" => $this->domain,
-            "secure" => $this->secure,
-            "httponly" => $this->httponly,
-            "samesite" => $this->samesite
+            'expires'  => $time,
+            'path'     => $this->path,
+            'domain'   => $this->domain,
+            'secure'   => $this->secure,
+            'httponly' => $this->httponly,
+            'samesite' => $this->samesite
          ]);
       }
    }
@@ -60,7 +60,7 @@ class Cookie {
          [$data, $hash] = $parts;
 
          if (!hash_equals(hash_hmac('sha256', $data, $this->encryption_key), $hash)) {
-            throw new SystemException("Cookie integrity check failed [{$name}]");
+            throw new SystemException('Cookie [' . $name . '] integrity check failed');
          }
 
          return $data;

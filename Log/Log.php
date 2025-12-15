@@ -111,7 +111,7 @@ class Log {
       $this->checkPath();
       $path = $this->path . '/' . $this->prefix . date($this->file_format) . $this->extension;
       if (!file_put_contents($path, $message . "\n", FILE_APPEND | LOCK_EX)) {
-         throw new LogException("Log file write error [{$path}]");
+         throw new LogException('Log file write error [' . $path . ']');
       }
 
       return true;
@@ -119,11 +119,11 @@ class Log {
 
    private function checkPath(): void {
       if (!check_path($this->path)) {
-         throw new LogException("Log file upload directory is invalid [{$this->path}]");
+         throw new LogException('Log file upload directory [' . $this->path . '] is invalid');
       }
 
       if (!check_permission($this->path)) {
-         throw new LogException("Log file upload directory is not writable [{$this->path}]");
+         throw new LogException('Log file upload directory [' . $this->path . '] is not writable');
       }
    }
 }

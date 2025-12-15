@@ -23,7 +23,7 @@ class Image {
       }
 
       $config = import_config('defines.image');
-      $this->path = ROOT_DIR . DS . $config['path'];
+      $this->path = ROOT_DIR . $config['path'];
       $this->quality = $config['quality'];
       $this->background = $config['background'];
 
@@ -33,7 +33,7 @@ class Image {
    public function data(string $path): self {
       $image = file_get_contents($path, false, stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]));
       if ($image === false) {
-         throw new SystemException("Could not load image [{$path}]");
+         throw new SystemException('Could not load image [' . $path . ']');
       }
 
       $info = getimagesizefromstring($image);
@@ -159,7 +159,7 @@ class Image {
    }
 
    public function path(string $path): self {
-      $this->path = ROOT_DIR . DS . $path;
+      $this->path = ROOT_DIR . $path;
       return $this;
    }
 
@@ -196,7 +196,7 @@ class Image {
       ob_end_clean();
 
       if (!file_put_contents($path, $data)) {
-         throw new SystemException("Image file save error [{$path}]");
+         throw new SystemException('Image file save error [' . $path . ']');
       }
 
       return true;
@@ -317,11 +317,11 @@ class Image {
 
    private function checkPath(): void {
       if (!check_path($this->path)) {
-         throw new SystemException("Image file upload directory is invalid [{$this->path}]");
+         throw new SystemException('Image file upload directory [' . $this->path . '] is invalid');
       }
 
       if (!check_permission($this->path)) {
-         throw new SystemException("Image file upload directory is not writable [{$this->path}]");
+         throw new SystemException('Image file upload directory [' . $this->path . '] is not writable');
       }
    }
 

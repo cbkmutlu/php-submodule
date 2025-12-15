@@ -75,7 +75,7 @@ class Cli {
 
       $cwd = getcwd();
       chdir(getcwd());
-      $output = shell_exec("php -S 127.0.0.1:$port");
+      $output = shell_exec('php -S 127.0.0.1:' . $port);
       chdir($cwd);
 
       return print_r($output);
@@ -97,44 +97,49 @@ class Cli {
    }
 
    private function module(string $module): string {
-      $path = "App/Modules/$module";
-      if (file_exists("$path/{$module}Controller.php")) {
+      $path = 'App/Modules/' . $module;
+      if (file_exists($path . '/' . $module . 'Controller.php')) {
          return $this->error('Module already exists: ' . $path);
       }
 
       $this->dir($path);
       $list = ['Controller', 'Service', 'Repository', 'Request', 'Response'];
       foreach ($list as $item) {
-         $template = file_get_contents("System/Cli/$item.temp");
+         $template = file_get_contents('System/Cli/' . $item . '.temp');
          $content = str_replace('{class}', $module, $template);
-         file_put_contents("$path/{$module}{$item}.php", $content);
+         file_put_contents($path . '/' . $module . $item . '.php', $content);
       }
 
       return $this->success('Module successfully created: ' . $path);
    }
 
    public function migration(string $param1, ?string $param2 = null): string {
+      // refresh
       if ($param1 === 'refresh') {
          $this->migration('reset');
          return $this->migration('run');
-      } else if ($param1 === 'create') {
+      }
+
+      // create
+      if ($param1 === 'create') {
          if (is_string($param2) && preg_match('#^[A-Za-z_][A-Za-z0-9_]*\/[A-Za-z_][A-Za-z0-9_]*$#', $param2)) {
             [$module, $class] = explode('/', $param2);
-            $location = "App/Modules/$module/Migrations";
-            $search = "App/Modules/*/Migrations";
+            $location = 'App/Modules/' . $module . '/Migrations';
+            $search = 'App/Modules/*/Migrations';
          } elseif (is_string($param2) && preg_match('#^[A-Za-z_][A-Za-z0-9_]*$#', $param2)) {
             $class = $param2;
-            $location = "App/Migrations";
-            $search = "App/Migrations";
+            $location = 'App/Migrations';
+            $search = 'App/Migrations';
          } else {
             return $this->error('Invalid migration command');
          }
 
          $prefix = date('Y_m_d');
          $max = 0;
-         foreach (glob(ROOT_DIR . '/' . $search . '/*.php') as $migration) {
+         foreach (glob(ROOT_DIR . $search . '/*.php') as $migration) {
             $filename = basename($migration);
-            if (preg_match('/^' . $prefix . '_(\d{3})_/', $filename, $matches)) {
+            require_once $migration;
+               if (preg_match('/^' . $prefix . '_(\d{3})_/', $filename, $matches)) {
                $num = (int) $matches[1];
                if ($num > $max) {
                   $max = $num;
@@ -142,8 +147,7 @@ class Cli {
             }
          }
 
-         $next = sprintf('%03d', $max + 1);
-         $name = $prefix . '_' . $next . '_' . $class;
+         $name = $prefix . '_' . sprintf('%03d', $max + 1) . '_' . $class;
 
          if (class_exists($class)) {
             return $this->info('Migration already exists: ' . $class);
@@ -158,13 +162,13 @@ class Cli {
          return $this->success('Migration successfully created: ' . $file);
       }
 
-      $json = "App/Config/migration.json";
+      // run, rollback, reset
+      $json = 'App/Config/migration.json';
       if (!file_exists($json)) {
          file_put_contents($json, json_encode([], JSON_PRETTY_PRINT));
       }
 
-      $config = import_config('defines.app');
-      $location = $config['migrations'];
+      $location = 'App/Migrations';
       $migrations = json_decode(file_get_contents($json), true);
       $count = (count($migrations) > 0) ? max($migrations) : 0;
       $last = array_filter($migrations, function ($value) use ($count) {
@@ -172,7 +176,7 @@ class Cli {
       });
       $migrate = false;
 
-      foreach (glob(ROOT_DIR . '/' .  $location . '/*.php') as $migration) {
+      foreach (glob(APP_DIR . $location . '/*.php') as $migration) {
          require_once $migration;
 
          $class = substr(basename($migration), 15, -4);
@@ -230,14 +234,13 @@ class Cli {
    }
 
    private function write(string $string, ?string $color = null): string {
-      $colored_string = "";
+      $colored_string = '';
 
       if (isset($this->colors[$color])) {
-         $colored_string .= "\e[" . $this->colors[$color] . "m";
+         $colored_string .= "\e[" . $this->colors[$color] . 'm';
       }
 
       $colored_string .= $string . "\e[0m";
-
       return $colored_string;
    }
 

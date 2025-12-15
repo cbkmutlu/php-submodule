@@ -47,7 +47,7 @@ class Language {
       }
 
       [$file, $key] = explode('.', $params);
-      $path = APP_DIR . 'Modules' . DS . strtolower($file) . DS . 'Languages' . DS . strtolower($locale) . '.php';
+      $path = APP_DIR . 'Modules/' . strtolower($file) . '/Languages/' . strtolower($locale) . '.php';
       $file = $locale . '_module_' . strtolower($file);
       return $this->checkFile($file, $path, $key, $printf, $locale);
    }
@@ -58,7 +58,7 @@ class Language {
       }
 
       [$file, $key] = explode('.', $params);
-      $path = SYSTEM_DIR . 'Language' . DS . $locale . DS . strtolower($file) . '.php';
+      $path = SYSTEM_DIR . 'Language/' . $locale . '/' . strtolower($file) . '.php';
       $file = $locale . '_system_' . strtolower($file);
       return $this->checkFile($file, $path, $key, $printf, $locale);
    }
@@ -66,7 +66,7 @@ class Language {
    private function checkFile(string $file, string $path, string $key, ?array $printf, ?string $locale): string {
       if (!isset($this->translations[$file])) {
          if (!file_exists($path)) {
-            throw new SystemException("Language file not found [{$path}]");
+            throw new SystemException('Language file not found [' . $path . ']');
          }
          $this->translations[$file] = require_once $path;
       }

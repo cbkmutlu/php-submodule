@@ -67,9 +67,9 @@ class Jwt {
 
       $headerEncoded = $this->base64Encode(json_encode($header, JSON_THROW_ON_ERROR));
       $payloadEncoded = $this->base64Encode(json_encode($payload, JSON_THROW_ON_ERROR));
-      $signatureEncoded = $this->createSignature("$headerEncoded.$payloadEncoded", $secret, $algorithm);
+      $signatureEncoded = $this->createSignature($headerEncoded . '.' . $payloadEncoded, $secret, $algorithm);
 
-      return "$headerEncoded.$payloadEncoded." . $this->base64Encode($signatureEncoded);
+      return $headerEncoded . '.' . $payloadEncoded . '.' . $this->base64Encode($signatureEncoded);
    }
 
    public function parseToken(?string $token = null, ?string $secret = null): array {
@@ -101,7 +101,7 @@ class Jwt {
          return ($this->resolver)($header['kid'] ?? null);
       }
 
-      if (!$this->verifySignature("$headerEncoded.$payloadEncoded", $signature, $secret, $header['alg'])) {
+      if (!$this->verifySignature($headerEncoded . '.' . $payloadEncoded, $signature, $secret, $header['alg'])) {
          throw new JwtException('Signature verification failed', 401);
       }
 

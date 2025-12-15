@@ -18,7 +18,7 @@ class View {
       }
 
       if (!is_file($path . $file)) {
-         throw new SystemException("View file not found [{$path}{$file}]");
+         throw new SystemException('View file not found [' . $path . $file . ']');
       }
 
       extract($data);
@@ -34,17 +34,17 @@ class View {
       }
 
       if (!is_file($path . $template)) {
-         throw new SystemException("View file not found [{$path}{$template}]");
+         throw new SystemException('View file not found [' . $path . $template . ']');
       }
 
       $code = file_get_contents($path . $template);
 
       if (preg_match('/<!--\s*main:(?<template>[a-zA-Z0-9_.\-\/]+)\s*-->/', $code, $matches) === 1) {
-         if (!is_file($path . $matches["template"])) {
-            throw new SystemException("Base view file not found [{$path}{$matches["template"]}]");
+         if (!is_file($path . $matches['template'])) {
+            throw new SystemException('Base view file not found [' . $path . $matches['template'] . ']');
          }
 
-         $base = file_get_contents($path . $matches["template"]);
+         $base = file_get_contents($path . $matches['template']);
          $blocks = $this->blocks($code);
          $code = $this->yields($base, $blocks);
       }
@@ -56,7 +56,7 @@ class View {
       extract($data, EXTR_SKIP);
       ob_start();
       try {
-         eval("?>$code");
+         eval('?>' . $code);
       } catch (SystemException $e) {
          ob_end_clean();
          throw new SystemException($e->getMessage());
@@ -66,7 +66,7 @@ class View {
    }
 
    private function variables(string $code): string {
-      return preg_replace("#{{\s*(\S+)\s*}}#", "<?= htmlspecialchars(\$$1 ?? '') ?>", $code);
+      return preg_replace('#{{\s*(\S+)\s*}}#', '<?= htmlspecialchars($$1 ?? \'\') ?>', $code);
    }
 
    private function conditions(string $code): string {
@@ -75,7 +75,7 @@ class View {
          function ($match) {
             $keyword = $match[1];
             $condition = trim($match[2]);
-            return "<?php $keyword($condition): ?>";
+            return '<?php ' . $keyword . '(' . $condition . '): ?>';
          },
          $code
       );
@@ -83,7 +83,7 @@ class View {
       $code = preg_replace_callback(
          '#<!--\s*(else)\s*-->#',
          function ($match) {
-            return "<?php {$match[1]}: ?>";
+            return '<?php ' . $match[1] . '; ?>';
          },
          $code
       );
@@ -91,7 +91,7 @@ class View {
       $code = preg_replace_callback(
          '#<!--\s*(endif|endforeach|endwhile)\s*-->#',
          function ($match) {
-            return "<?php {$match[1]}; ?>";
+            return '<?php ' . $match[1] . '; ?>';
          },
          $code
       );
@@ -114,7 +114,7 @@ class View {
       preg_match_all('#<!--\s*yield:(?<name>\w+)\s*-->#', $code, $matches, PREG_SET_ORDER);
 
       foreach ($matches as $match) {
-         $name = $match["name"];
+         $name = $match['name'];
          if (isset($blocks[$name])) {
             $block = $blocks[$name];
             $code = preg_replace('#<!--\s*yield:' . preg_quote($name, '#') . '\s*-->#', $block, $code);
@@ -132,7 +132,7 @@ class View {
       }
 
       foreach ($matches as $match) {
-         $template = trim($match["template"]);
+         $template = trim($match['template']);
          $contents = file_get_contents($dir . $template);
          $code = str_replace($match[0], $contents, $code);
       }

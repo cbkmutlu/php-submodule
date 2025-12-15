@@ -48,7 +48,7 @@ class Request {
    }
 
    public function put(?string $param = null, $filter = true): mixed {
-      parse_str(file_get_contents("php://input"), $_PUT);
+      parse_str(file_get_contents('php://input'), $_PUT);
 
       if (is_null($param)) {
          return $this->filter($_PUT, $filter);
@@ -68,7 +68,7 @@ class Request {
    }
 
    public function delete(?string $param = null, $filter = true): mixed {
-      parse_str(file_get_contents("php://input"), $_DELETE);
+      parse_str(file_get_contents('php://input'), $_DELETE);
 
       if (is_null($param)) {
          return $this->filter($_DELETE, $filter);
@@ -170,11 +170,11 @@ class Request {
    }
 
    public function origin(): string {
-      return $this->protocol() . "://" . $this->host();
+      return $this->protocol() . '://' . $this->host();
    }
 
    public function href(): string {
-      return $this->protocol() . "://" . $this->host() . $this->uri();
+      return $this->protocol() . '://' . $this->host() . $this->uri();
    }
 
    public function script(): string {
@@ -196,7 +196,7 @@ class Request {
    public function authorization(): string {
       $auth = null;
       if ($this->server('Authorization')) {
-         $auth = $this->server["Authorization"];
+         $auth = $this->server['Authorization'];
       } else if ($this->server('HTTP_AUTHORIZATION')) {
          $auth = $this->server['HTTP_AUTHORIZATION'];
       } else {
@@ -343,7 +343,7 @@ class Request {
    }
 
    public function isMobile(): bool {
-      return preg_match("/(android|avantgo|blackberry|bolt|boost|cricket|docomo|fone|hiptop|mini|mobi|palm|phone|pie|tablet|up\.browser|up\.link|webos|wos)/i", $this->server("HTTP_USER_AGENT")) > 0;
+      return preg_match('/(android|avantgo|blackberry|bolt|boost|cricket|docomo|fone|hiptop|mini|mobi|palm|phone|pie|tablet|up\.browser|up\.link|webos|wos)/i', $this->server('HTTP_USER_AGENT')) > 0;
    }
 
    public function isReferral(): bool {

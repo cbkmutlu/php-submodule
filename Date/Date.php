@@ -56,7 +56,7 @@ class Date {
    }
 
    public function getTimestamp(bool $micro = false): int {
-      return $micro ? ($this->datetime->getTimestamp() * 1000) + intval($this->datetime->format("u") / 1000) : $this->datetime->getTimestamp();
+      return $micro ? ($this->datetime->getTimestamp() * 1000) + intval($this->datetime->format('u') / 1000) : $this->datetime->getTimestamp();
    }
 
    public function getYear(): string {

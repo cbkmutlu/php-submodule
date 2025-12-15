@@ -127,7 +127,7 @@ class Router {
       $key = array_search(end($this->routes), $this->routes);
       $pattern = uri_parse($this->routes[$key]['uri'], $expressions);
       $pattern = '/' . implode('/', $pattern);
-      $pattern = '/^' . str_replace('/', '\/', $pattern) . '$/';
+      $pattern = '/^' . str_replace('/', '\\/', $pattern) . '$/';
 
       $this->routes[$key]['pattern'] = $pattern;
       return $this;
@@ -162,7 +162,7 @@ class Router {
          if ($this->error && is_callable($this->error)) {
             call_user_func($this->error);
          } else {
-            throw new RouterException("Route not found [" . uri_get() . "]", 404);
+            throw new RouterException('Route [' . uri_get() . '] not found', 404);
          }
       }
 
@@ -173,17 +173,17 @@ class Router {
          } elseif (is_array($route['callback'])) {
             [$controller, $method] = $route['callback'];
             if (!class_exists($controller)) {
-               throw new RouterException("Controller not found [{$controller}::{$method}]");
+               throw new RouterException('Controller [' . $controller . '] not found');
             }
             if (!method_exists($controller, $method)) {
-               throw new RouterException("Method not found [{$controller}::{$method}]");
+               throw new RouterException('Method [' . $method . '] not found in ' . $controller);
             }
             $instance = $this->container->resolveClass($controller);
             // $args = $this->container->resolveMethod($instance, $method, $params);
             // $instance->$method(...$args);
             call_user_func_array([$instance, $method], array_values($params));
          } else {
-            throw new RouterException("Invalid route callback");
+            throw new RouterException('Invalid route callback');
          }
       };
 
@@ -232,7 +232,7 @@ class Router {
 
       $uri = $pattern;
       $pattern = preg_replace('/[\[{\(].*[\]}\)]/U', '([^/]+)', $pattern);
-      $pattern = '/^' . str_replace('/', '\/', $pattern) . '$/';
+      $pattern = '/^' . str_replace('/', '\\/', $pattern) . '$/';
 
       $this->routes[] = array_filter([
          'uri'         => $uri,

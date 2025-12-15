@@ -137,7 +137,7 @@ class Validation {
       if ($current === '*') {
          if (is_array($data)) {
             foreach (array_keys($data) as $key) {
-               $newPrefix = $prefix ? "$prefix.$key" : $key;
+               $newPrefix = $prefix ? $prefix . '.' . $key : $key;
                if (empty($parts)) {
                   $paths[] = $newPrefix;
                } else {
@@ -146,7 +146,7 @@ class Validation {
             }
          }
       } else {
-         $newPrefix = $prefix ? "$prefix.$current" : $current;
+         $newPrefix = $prefix ? $prefix . '.' . $current : $current;
          if (empty($parts)) {
             $paths[] = $newPrefix;
          } else {

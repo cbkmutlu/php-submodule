@@ -213,7 +213,7 @@ class Curl {
          $pattern = '#HTTP/\d\.\d.*?$.*?\r\n\r\n#ims';
 
          if (!preg_match_all($pattern, $response, $matches) || empty($matches[0])) {
-            throw new SystemException("Curl request was sent but the response was not received");
+            throw new SystemException('Curl request was sent but the response was not received');
          }
 
          $headers_string = array_pop($matches[0]);
@@ -223,7 +223,7 @@ class Curl {
          $version_and_status = array_shift($headers);
 
          if (!preg_match('#HTTP/(\d\.\d)\s(\d\d\d)\s(.*)#', $version_and_status, $matches)) {
-            throw new SystemException("Curl response status is invalid [{$version_and_status}]");
+            throw new SystemException('Curl response status is invalid [' . $version_and_status . ']');
          }
 
          $this->response_header['Http-Version'] = $matches[1];
@@ -239,7 +239,7 @@ class Curl {
       } else {
          $error = curl_error($this->curl);
          curl_close($this->curl);
-         throw new SystemException("Curl request failed [{$error}]");
+         throw new SystemException('Curl request failed [' . $error . ']');
       }
 
       curl_close($this->curl);

@@ -31,11 +31,11 @@ class Upload {
 
    public function handle(array $file, ?string $filename = null): bool {
       if (empty($file['tmp_name'])) {
-         $this->error['err_no_file'] = $this->language->system("upload.err_no_file");
+         $this->error['err_no_file'] = $this->language->system('upload.err_no_file');
          return false;
       }
 
-      $pathname = ROOT_DIR . DS . $this->path;
+      $pathname = ROOT_DIR . $this->path;
       $filename = $this->checkFileName($pathname, $filename ?? $file['name']);
 
       $this->file = $file;
@@ -49,7 +49,7 @@ class Upload {
          throw new SystemException('File upload error');
       }
 
-      if (!move_uploaded_file($file['tmp_name'], $pathname . DS . $filename)) {
+      if (!move_uploaded_file($file['tmp_name'], $pathname . '/' . $filename)) {
          throw new SystemException('File upload error');
       }
 
@@ -149,7 +149,7 @@ class Upload {
       $filename = $basename . $extension;
 
       while (file_exists($directory . '/' . $filename)) {
-         $filename = $basename . "($i)" . $extension;
+         $filename = $basename . '(' . $i . ')' . $extension;
          $i++;
       }
 
@@ -216,13 +216,13 @@ class Upload {
    }
 
    private function checkPath(): void {
-      $pathname = ROOT_DIR . DS . $this->path;
+      $pathname = ROOT_DIR . $this->path;
       if (!check_path($pathname)) {
-         throw new SystemException("File upload directory is invalid [{$pathname}]");
+         throw new SystemException('File upload directory [' . $pathname . '] is invalid');
       }
 
       if (!check_permission($pathname)) {
-         throw new SystemException("File upload directory is not writable [{$pathname}]");
+         throw new SystemException('File upload directory [' . $pathname . '] is not writable');
       }
    }
 }

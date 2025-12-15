@@ -50,7 +50,7 @@ class Container {
       }
 
       if (!isset($this->services[$name])) {
-         throw new SystemException("Service not found [{$name}]");
+         throw new SystemException('Service not found [' . $name . ']');
       }
 
       $service = $this->services[$name];
@@ -61,7 +61,7 @@ class Container {
       } elseif (is_object($definition)) {
          $instance = $definition;
       } else {
-         throw new SystemException("Service definition must be callable or object [{$name}]");
+         throw new SystemException('Service definition must be callable or object [' . $name . ']');
       }
 
       if ($service['singleton']) {
@@ -78,7 +78,7 @@ class Container {
 
       $reflection = $this->reflections[$class];
       if (!$reflection->isInstantiable()) {
-         throw new SystemException("Class is not instantiable [{$class}]");
+         throw new SystemException('Class is not instantiable [' . $class . ']');
       }
 
       $constructor = $reflection->getConstructor();
@@ -117,7 +117,7 @@ class Container {
             return $parameter->getDefaultValue();
          }
 
-         throw new SystemException("Cannot resolve parameter [{$parameter->getName()}] of type [{$type}].");
+         throw new SystemException('Cannot resolve parameter [' . $parameter->getName() . '] of type [' . $type . '].');
       }, $parameters);
 
       $instance = $reflection->newInstanceWithoutConstructor();
@@ -147,7 +147,7 @@ class Container {
             $final[] = $param->getDefaultValue();
             continue;
          } else {
-            throw new SystemException("Cannot resolve method parameter [{$name}] in {$method}.");
+            throw new SystemException('Cannot resolve method parameter [' . $name . '] in ' . $method . '.');
          }
 
          if ($type instanceof ReflectionNamedType && $type->isBuiltin()) {

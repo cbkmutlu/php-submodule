@@ -15,9 +15,9 @@ class Crypt {
 
    public function __construct() {
       $config = import_config('defines.crypt');
+      $this->secret = $config['secret'];
       $this->cipher = $config['cipher'];
       $this->phrase = $config['phrase'];
-      $this->secret = $config['secret'];
       $this->cost = $config['cost'];
       $this->algorithm = $config['algorithm'];
    }
@@ -30,7 +30,7 @@ class Crypt {
       $iv = random_bytes(openssl_cipher_iv_length($this->cipher));
       $encrypted = openssl_encrypt($value, $this->cipher, hash($this->phrase, $secret, true), 0, $iv);
 
-      return strtr(base64_encode($iv . $encrypted), '+/=', '-,');
+      return $this->base64Encode($iv . $encrypted);
    }
 
    public function decode(string $value, ?string $secret = null): string {
@@ -38,7 +38,7 @@ class Crypt {
          $secret = $this->secret;
       }
 
-      $data = base64_decode(strtr($value, '-,', '+/='));
+      $data = $this->base64Decode($value);
       $iv_length = openssl_cipher_iv_length($this->cipher);
       $iv = substr($data, 0, $iv_length);
       $encrypted = substr($data, $iv_length);
@@ -75,5 +75,24 @@ class Crypt {
       }
 
       return password_needs_rehash($hash, $this->algorithm, $options);
+   }
+
+   private function base64Encode(string $data): string {
+      return strtr(rtrim(base64_encode($data), '='), '+/', '-_');
+   }
+
+   private function base64Decode(string $data): string {
+      $data = strtr($data, '-_', '+/');
+      $padding = strlen($data) % 4;
+      if ($padding) {
+         $data .= str_repeat('=', 4 - $padding);
+      }
+
+      $decoded = base64_decode($data, true); // strict
+      if ($decoded === false) {
+         throw new SystemException('Invalid base64 input');
+      }
+
+      return $decoded;
    }
 }

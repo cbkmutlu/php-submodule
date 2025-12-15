@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace System\Jwt;
 
 use System\Jwt\JwtException;
+use System\Exception\SystemException;
 
 class Jwt {
    private $secret;
@@ -90,7 +91,7 @@ class Jwt {
          $header = json_decode($this->base64Decode($headerEncoded), true, 512, JSON_THROW_ON_ERROR);
          $payload = json_decode($this->base64Decode($payloadEncoded), true, 512, JSON_THROW_ON_ERROR);
       } catch (\Exception $e) {
-         throw new JwtException('Invalid token encoding', 403);
+         throw new JwtException('Invalid token encoding', 401);
       }
       $signature = $this->base64Decode($signatureEncoded);
 
@@ -101,13 +102,13 @@ class Jwt {
       }
 
       if (!$this->verifySignature("$headerEncoded.$payloadEncoded", $signature, $secret, $header['alg'])) {
-         throw new JwtException('Signature verification failed', 403);
+         throw new JwtException('Signature verification failed', 401);
       }
 
       $this->validateClaim($payload);
 
       if ($this->revoker && isset($payload['jti']) && ($this->revoker)($payload['jti'])) {
-         throw new JwtException('Token revoked', 403);
+         throw new JwtException('Token revoked', 401);
       }
 
       return $payload;
@@ -203,15 +204,21 @@ class Jwt {
    }
 
    private function base64Encode(string $data): string {
-      return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+      return strtr(rtrim(base64_encode($data), '='), '+/', '-_');
    }
 
    private function base64Decode(string $data): string {
       $data = strtr($data, '-_', '+/');
-      $mod4 = strlen($data) % 4;
-      if ($mod4) {
-         $data .= str_repeat('=', 4 - $mod4);
+      $padding = strlen($data) % 4;
+      if ($padding) {
+         $data .= str_repeat('=', 4 - $padding);
       }
-      return base64_decode($data);
+
+      $decoded = base64_decode($data, true); // strict
+      if ($decoded === false) {
+         throw new SystemException('Invalid base64 input');
+      }
+
+      return $decoded;
    }
 }

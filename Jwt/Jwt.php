@@ -37,7 +37,7 @@ class Jwt {
       $this->secret = $config['secret'];
       $this->algorithm = $config['algorithm'];
       $this->leeway = $config['leeway'];
-      $this->expire = $config['expire'];
+      $this->expire = $config['expire']['access'];
    }
 
    public function createToken(array $payload, ?string $secret = null, ?string $algorithm = null, array $header = [], ?string $kid = null): string {

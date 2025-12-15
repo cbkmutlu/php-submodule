@@ -92,7 +92,7 @@ class Cli {
    }
 
    private function key(): string {
-      $data = base64_encode(random_bytes(32));
+      $data = bin2hex(random_bytes(32));
       return $this->success('Key: ' . $data);
    }
 

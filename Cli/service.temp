@@ -18,7 +18,7 @@ class {class}Service extends Service {
    public function __construct(
       protected Database $database,
       protected Validation $validation,
-      {class}Repository $repository,
+      {class}Repository $repository
    ) {
       $this->repository = $repository;
    }

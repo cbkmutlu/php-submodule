@@ -61,6 +61,7 @@ class Cli {
       return
          $this->info('[hash]', 'light_blue') . "\t\t\t" . 'hash 123456' . "\n" .
          $this->info('[key]', 'light_blue') . "\t\t\t" . 'key' . "\n" .
+         $this->info('[module]', 'light_blue') . "\t\t" . 'module User' . "\n" .
          $this->info('[migration create]', 'light_blue') . "\t" . 'migration create User/Migration' . "\n" .
          $this->info('[migration run]', 'light_blue') . "\n" .
          $this->info('[migration rollback]', 'light_blue') . "\n" .
@@ -176,7 +177,7 @@ class Cli {
       });
       $migrate = false;
 
-      foreach (glob(APP_DIR . $location . '/*.php') as $migration) {
+      foreach (glob(ROOT_DIR . $location . '/*.php') as $migration) {
          require_once $migration;
 
          $class = substr(basename($migration), 15, -4);

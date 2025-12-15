@@ -6,12 +6,12 @@ namespace App\Modules\{class};
 
 use System\Database\Database;
 use System\Validation\Validation;
-use App\Core\Abstracts\BaseService;
+use App\Core\Abstracts\Service;
 use System\Exception\SystemException;
 use App\Modules\{class}\{class}Request;
 use App\Modules\{class}\{class}Repository;
 
-class {class}Service extends BaseService {
+class {class}Service extends Service {
    /** @var {class}Repository */
    protected mixed $repository;
 

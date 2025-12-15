@@ -32,7 +32,7 @@ class Container {
             'definition' => function () use ($name) {
                return $this->resolveClass($name);
             },
-            'singleton' => $singleton,
+            'singleton' => $singleton
          ];
       }
    }

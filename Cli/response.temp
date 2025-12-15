@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\{class};
 
-use App\Core\Abstracts\BaseResource;
+use App\Core\Abstracts\Resource;
 
-class {class}Response extends BaseResource {
+class {class}Response extends Resource {
 }

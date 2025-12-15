@@ -6,12 +6,12 @@ namespace App\Modules\{class};
 
 use System\Http\Request;
 use System\Http\Response;
-use App\Core\Abstracts\BaseController;
+use App\Core\Abstracts\Controller;
 use App\Modules\{class}\{class}Request;
 use App\Modules\{class}\{class}Service;
 use App\Modules\{class}\{class}Response;
 
-class {class}Controller extends BaseController {
+class {class}Controller extends Controller {
    public function __construct(
       protected Response $response,
       protected Request $request,

@@ -6,6 +6,7 @@ namespace App\Modules\{class};
 
 use System\Database\Database;
 use System\Validation\Validation;
+// use System\Validation\Validation;
 use App\Core\Abstracts\Service;
 use System\Exception\SystemException;
 use App\Modules\{class}\{class}Request;
@@ -17,7 +18,7 @@ class {class}Service extends Service {
 
    public function __construct(
       protected Database $database,
-      protected Validation $validation,
+      // protected Validation $validation,
       {class}Repository $repository
    ) {
       $this->repository = $repository;

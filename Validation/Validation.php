@@ -204,7 +204,7 @@ class Validation {
    /**
     * Add a custom validation rule
     */
-   public function addRule(string $name, callable $callback, string $message = ':attribute geçersiz.'): self {
+   public function addRule(string $name, callable $callback, string $message = ':label geçersiz.'): self {
       $this->customRules[$name] = $callback;
       $this->messages[$name] = $message;
       return $this;
@@ -215,8 +215,7 @@ class Validation {
     */
    private function addError(string $field, string $rule, string $label, array $params = []): void {
       $message = $this->messages[$rule] ?? $this->messages['default'];
-      $message = str_replace(':attribute', $label, $message);
-      $message = str_replace(':field', $label, $message);
+      $message = str_replace(':label', $label, $message);
 
       if (!empty($params)) {
          $labeledParams = array_map(function ($param) {
@@ -243,65 +242,65 @@ class Validation {
    private function setDefaultMessages(): void {
       $this->messages = [
          // Basic
-         'required'     => ':attribute alanı zorunludur.',
-         'nullable'     => ':attribute boş bırakılabilir.',
-         'requiredWith' => ':attribute alanı, :values alanlarından biri mevcut olduğunda zorunludur.',
-         'requiredWithout' => ':attribute alanı, :values alanlarından biri mevcut olmadığında zorunludur.',
-         'requiredWithAll' => ':attribute alanı, :values alanlarının tümü mevcut olduğunda zorunludur.',
-         'requiredWithoutAll' => ':attribute alanı, :values alanlarının tümü mevcut olmadığında zorunludur.',
+         'required'           => ':label alanı zorunludur.',
+         'nullable'           => ':label boş bırakılabilir.',
+         'requiredWith'       => ':label alanı, :values alanlarından biri mevcut olduğunda zorunludur.',
+         'requiredWithout'    => ':label alanı, :values alanlarından biri mevcut olmadığında zorunludur.',
+         'requiredWithAll'    => ':label alanı, :values alanlarının tümü mevcut olduğunda zorunludur.',
+         'requiredWithoutAll' => ':label alanı, :values alanlarının tümü mevcut olmadığında zorunludur.',
 
          // Data Type
-         'email'        => ':attribute geçerli bir e-posta adresi olmalıdır.',
-         'numeric'      => ':attribute sayısal bir değer olmalıdır.',
-         'integer'      => ':attribute tam sayı olmalıdır.',
-         'float'        => ':attribute ondalıklı sayı olmalıdır.',
-         'string'       => ':attribute metin olmalıdır.',
-         'array'        => ':attribute bir dizi olmalıdır.',
-         'json'         => ':attribute geçerli bir JSON formatında olmalıdır.',
-         'boolean'      => ':attribute true veya false olmalıdır.',
+         'email'        => ':label geçerli bir e-posta adresi olmalıdır.',
+         'numeric'      => ':label sayısal bir değer olmalıdır.',
+         'integer'      => ':label tam sayı olmalıdır.',
+         'float'        => ':label ondalıklı sayı olmalıdır.',
+         'string'       => ':label metin olmalıdır.',
+         'array'        => ':label bir dizi olmalıdır.',
+         'json'         => ':label geçerli bir JSON formatında olmalıdır.',
+         'boolean'      => ':label true veya false olmalıdır.',
 
          // Length/Value
-         'min'          => ':attribute en az :value olmalıdır.',
-         'max'          => ':attribute en fazla :value olmalıdır.',
-         'between'      => ':attribute :0 ile :1 arasında olmalıdır.',
-         'exact'        => ':attribute tam olarak :value olmalıdır.',
+         'min'          => ':label en az :value olmalıdır.',
+         'max'          => ':label en fazla :value olmalıdır.',
+         'between'      => ':label :0 ile :1 arasında olmalıdır.',
+         'exact'        => ':label tam olarak :value olmalıdır.',
 
          // Array Rules
-         'in'           => ':attribute geçerli bir değer olmalıdır.',
-         'notIn'        => ':attribute geçersiz bir değer içeriyor.',
+         'in'           => ':label geçerli bir değer olmalıdır.',
+         'notIn'        => ':label geçersiz bir değer içeriyor.',
 
          // String Rules
-         'contains'     => ':attribute :value içermelidir.',
-         'notContains'  => ':attribute :value içermemelidir.',
-         'startWith'    => ':attribute :value ile başlamalıdır.',
-         'endWith'      => ':attribute :value ile bitmelidir.',
-         'alpha'        => ':attribute sadece harflerden oluşmalıdır.',
-         'alphanum'     => ':attribute sadece harf ve rakamlardan oluşmalıdır.',
-         'alphaDash'    => ':attribute sadece harf, rakam, tire ve alt çizgi içerebilir.',
+         'contains'     => ':label :value içermelidir.',
+         'notContains'  => ':label :value içermemelidir.',
+         'startWith'    => ':label :value ile başlamalıdır.',
+         'endWith'      => ':label :value ile bitmelidir.',
+         'alpha'        => ':label sadece harflerden oluşmalıdır.',
+         'alphanum'     => ':label sadece harf ve rakamlardan oluşmalıdır.',
+         'alphaDash'    => ':label sadece harf, rakam, tire ve alt çizgi içerebilir.',
 
          // URL and Network
-         'url'          => ':attribute geçerli bir URL olmalıdır.',
-         'ip'           => ':attribute geçerli bir IP adresi olmalıdır.',
-         'ipv4'         => ':attribute geçerli bir IPv4 adresi olmalıdır.',
-         'ipv6'         => ':attribute geçerli bir IPv6 adresi olmalıdır.',
+         'url'          => ':label geçerli bir URL olmalıdır.',
+         'ip'           => ':label geçerli bir IP adresi olmalıdır.',
+         'ipv4'         => ':label geçerli bir IPv4 adresi olmalıdır.',
+         'ipv6'         => ':label geçerli bir IPv6 adresi olmalıdır.',
 
          // Format
-         'date'         => ':attribute geçerli bir tarih olmalıdır.',
-         'creditCard'   => ':attribute geçerli bir kredi kartı numarası olmalıdır.',
+         'date'         => ':label geçerli bir tarih olmalıdır.',
+         'creditCard'   => ':label geçerli bir kredi kartı numarası olmalıdır.',
 
          // File
-         'mimes'        => ':attribute geçerli bir dosya türü olmalıdır.',
-         'minSize'      => ':attribute en az :value KB boyutunda olmalıdır.',
-         'maxSize'      => ':attribute en fazla :value KB boyutunda olmalıdır.',
+         'mimes'        => ':label geçerli bir dosya türü olmalıdır.',
+         'minSize'      => ':label en az :value KB boyutunda olmalıdır.',
+         'maxSize'      => ':label en fazla :value KB boyutunda olmalıdır.',
 
          // Comparison
-         'confirmed'    => ':attribute onayı eşleşmiyor.',
-         'same'         => ':attribute ile :value eşleşmelidir.',
-         'different'    => ':attribute ile :value farklı olmalıdır.',
+         'confirmed'    => ':label onayı eşleşmiyor.',
+         'same'         => ':label ile :value eşleşmelidir.',
+         'different'    => ':label ile :value farklı olmalıdır.',
 
          // Other
-         'regex'        => ':attribute formatı geçersiz.',
-         'default'      => ':attribute geçersiz.',
+         'regex'        => ':label formatı geçersiz.',
+         'default'      => ':label geçersiz.',
       ];
    }
 
@@ -707,7 +706,22 @@ class Validation {
       if (is_null($value) || $value === '') {
          return true;
       }
-      return strtotime($value) !== false;
+
+      if (is_array($value)) {
+         return false;
+      }
+
+      $pattern = '/^\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2}|Z)?)?$/i';
+      if (!preg_match($pattern, (string)$value)) {
+         return false;
+      }
+
+      try {
+         date_create($value);
+         return true;
+      } catch (\Exception $e) {
+         return false;
+      }
    }
 
    /**

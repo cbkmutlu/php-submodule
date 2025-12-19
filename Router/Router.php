@@ -28,32 +28,32 @@ class Router {
    public function group(callable $callback): void {
       $this->length++;
       $this->groups[] = [
-         'prefix' => $this->prefix,
+         'prefix'      => $this->prefix,
          'middlewares' => $this->middlewares,
-         'domain' => $this->domain,
-         'ip' => $this->ip,
-         'ssl' => $this->ssl,
-         'as' => $this->as,
+         'domain'      => $this->domain,
+         'ip'          => $this->ip,
+         'ssl'         => $this->ssl,
+         'as'          => $this->as
       ];
 
       call_user_func($callback);
       if ($this->length > 0) {
-         $this->prefix = $this->groups[$this->length - 1]['prefix'];
+         $this->prefix      = $this->groups[$this->length - 1]['prefix'];
          $this->middlewares = $this->groups[$this->length - 1]['middlewares'];
-         $this->domain = $this->groups[$this->length - 1]['domain'];
-         $this->ip = $this->groups[$this->length - 1]['ip'];
-         $this->ssl = $this->groups[$this->length - 1]['ssl'];
-         $this->as = $this->groups[$this->length - 1]['as'];
+         $this->domain      = $this->groups[$this->length - 1]['domain'];
+         $this->ip          = $this->groups[$this->length - 1]['ip'];
+         $this->ssl         = $this->groups[$this->length - 1]['ssl'];
+         $this->as          = $this->groups[$this->length - 1]['as'];
       }
 
       $this->length--;
       if ($this->length <= 0) {
-         $this->prefix = '/';
+         $this->prefix      = '/';
          $this->middlewares = [];
-         $this->domain = [];
-         $this->ip = [];
-         $this->ssl = false;
-         $this->as = null;
+         $this->domain      = [];
+         $this->ip          = [];
+         $this->ssl         = false;
+         $this->as          = null;
       }
    }
 
@@ -197,7 +197,7 @@ class Router {
          }
       };
 
-      $middlewares = array_merge(import_config('services.middlewares.default') ?? [], $route['middlewares'] ?? []);
+      $middlewares = array_merge(import_config('defines.middlewares') ?? [], $route['middlewares'] ?? []);
       $next = $callback;
 
       foreach (array_reverse($middlewares) as $middleware) {
@@ -252,7 +252,7 @@ class Router {
          'middlewares' => $this->middlewares,
          'domain'      => $this->domain,
          'ip'          => $this->ip,
-         'ssl'         => $this->ssl,
+         'ssl'         => $this->ssl
       ]);
    }
 

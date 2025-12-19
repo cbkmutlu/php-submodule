@@ -7,177 +7,118 @@ namespace System\Cache;
 use System\Exception\SystemException;
 
 class Cache {
-   private $filename;
+   private $namespace;
    private $path;
    private $extension;
    private $expire;
 
    public function __construct() {
-      $config = import_config('defines.cache');
-      $this->path = APP_DIR . $config['path'];
+      $config          = import_config('defines.cache');
+      $this->path      = APP_DIR . $config['path'];
+      $this->namespace = $config['namespace'];
       $this->extension = $config['extension'];
-      $this->expire = $config['expire'];
-      $this->filename = $config['filename'];
+      $this->expire    = $config['expire'];
+
+      $this->checkPath();
    }
 
-   public function save(string $name, mixed $data, ?int $expiration = null): void {
-      if (is_null($expiration)) {
-         $expiration = $this->expire;
+   public function get(string $key, mixed $default = null): mixed {
+      $file = $this->filePath($key);
+
+      $raw = @file_get_contents($file);
+      if ($raw === false) {
+         return $default;
       }
 
-      $values = [
-         'time' => time(),
-         'expire' => $expiration,
-         'data' => serialize($data)
-      ];
-
-      $content = $this->checkContent();
-
-      if (is_array($content)) {
-         $content[$name] = $values;
-      } else {
-         $content = [$name => $values];
+      if ($this->isExpired($file)) {
+         $this->delete($key);
+         return $default;
       }
 
-      $content = json_encode($content);
-      $this->writeFile($content);
+      $payload = json_decode($raw, true);
+      if (!isset($payload['data'])) {
+         return $default;
+      }
+
+      return $payload['data'];
    }
 
-   public function read(string $name, ?string $filename = null): mixed {
-      $content = $this->checkContent($filename);
+   public function set(string $key, mixed $value, ?int $expire = null): void {
+      $expire = $expire ?? $this->expire;
+      $file = $this->filePath($key);
+      $temp = $file . '.' . uniqid('', true);
+      $value = ['data' => $value, 'expire' => time() + $expire];
+      $data = json_encode($value, JSON_THROW_ON_ERROR);
 
-      if (!isset($content[$name]['data'])) {
-         return null;
+      if (file_put_contents($temp, $data, LOCK_EX) === false) {
+         throw new SystemException('Cache [' . $file . '] write failed');
       }
 
-      return unserialize($content[$name]['data']);
+      if ($expire > 0) {
+         touch($temp, time() + $expire);
+      }
+
+      rename($temp, $file);
    }
 
-   public function clear(string $name): void {
-      $content = $this->checkContent();
+   public function exists(string $key): bool {
+      return is_file($this->filePath($key));
+   }
 
-      if (is_array($content)) {
-         if (isset($content[$name])) {
-            unset($content[$name]);
-            $content = json_encode($content);
-            $this->writeFile($content);
-         } else {
-            throw new SystemException('Cache key [' . $name . '] not found');
-         }
+   public function delete(string $key): void {
+      $file = $this->filePath($key);
+      if (is_file($file)) {
+         unlink($file);
       }
    }
 
    public function clearAll(): void {
-      $content = $this->checkContent();
-
-      if (is_array($content)) {
-         $content = json_encode([]);
-         $this->writeFile($content);
+      foreach (glob($this->path . '/' . $this->namespace . '_*') as $file) {
+         unlink($file);
       }
    }
 
    public function clearExpired(): int {
-      $content = $this->checkContent();
-      $counter = 0;
+      $deleted = 0;
+      $now = time();
 
-      if (is_array($content)) {
-         foreach ($content as $key => $value) {
-            if ($this->checkExpire($value['time'], $value['expire'])) {
-               unset($content[$key]);
-               $counter++;
-            }
+      foreach (glob($this->path . '/' . $this->namespace . '_*') as $file) {
+         if (!is_file($file)) {
+            continue;
          }
 
-         if ($counter > 0) {
-            $content = json_encode($content);
-            $this->writeFile($content);
+         $expireAt = filemtime($file);
+         if ($expireAt !== false && $expireAt < $now) {
+            unlink($file);
+            $deleted++;
          }
       }
-      return $counter;
+
+      return $deleted;
    }
 
-   public function exist(string $name): bool {
-      $this->clearExpired();
-      $content = $this->checkContent();
+   private function isExpired(string $file): bool {
+      $expireAt = filemtime($file);
 
-      if ($content) {
-         return isset($content[$name]['data']);
+      if ($expireAt === false) {
+         return true;
       }
 
-      return false;
+      return $expireAt < time();
    }
 
-   public function setPath(string $path): self {
-      $this->path = APP_DIR . $path;
-      return $this;
-   }
-
-   public function getPath(): string {
-      return $this->path;
-   }
-
-   public function setFilename(string $name): self {
-      $this->filename = $name;
-      return $this;
-   }
-
-   public function getFilename(): string {
-      return $this->filename;
-   }
-
-   public function setExtension(string $extension): self {
-      $this->extension = $extension;
-      return $this;
-   }
-
-   public function getExtension(): string {
-      return $this->extension;
-   }
-
-   public function writeFile(string $content): bool {
-      $path = $this->checkFile();
-      if (!file_put_contents($path, $content)) {
-         throw new SystemException('Cache file [' . $path . '] write error');
-      }
-
-      return true;
-   }
-
-   private function checkContent(?string $filename = null): mixed {
-      $file = $this->checkFile($filename);
-
-      if (file_exists($file)) {
-         $content = file_get_contents($file);
-         return json_decode($content, true);
-      }
-
-      return false;
-   }
-
-   private function checkFile(?string $filename = null): string|bool {
-      if (is_null($filename)) {
-         $filename = preg_replace('/[^0-9a-z\.\_\-]/i', '', strtolower($this->filename));
-      }
-
-      $this->checkPath();
-      return $this->path . '/' . hash('sha256', $filename) . $this->extension;
+   private function filePath(string $key): string {
+      $safeKey = hash('sha256', $this->namespace . ':' . $key);
+      return $this->path . '/' . $this->namespace . '_' . $safeKey . $this->extension;
    }
 
    private function checkPath(): void {
       if (!check_path($this->path)) {
-         throw new SystemException('Cache file upload directory [' . $this->path . '] is invalid');
+         throw new SystemException('Cache directory [' . $this->path . '] cannot be created');
       }
 
       if (!check_permission($this->path)) {
-         throw new SystemException('Cache file upload directory is [' . $this->path . '] not writable');
+         throw new SystemException('Cache directory [' . $this->path . '] not writable');
       }
-   }
-
-   private function checkExpire(int $time, int $expiration): bool {
-      if ($expiration === 0) {
-         return false;
-      }
-
-      return time() - $time > $expiration;
    }
 }

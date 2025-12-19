@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace System\Log;
 
 use System\Log\LogException;
-use System\Language\Language;
 
 class Log {
    private $path;
@@ -14,15 +13,15 @@ class Log {
    private $content_format;
    private $extension;
 
-   public function __construct(
-      private Language $language
-   ) {
-      $config = import_config('defines.log');
-      $this->path = APP_DIR . $config['path'];
-      $this->prefix = $config['prefix'];
-      $this->file_format = $config['file_format'];
+   public function __construct() {
+      $config               = import_config('defines.log');
+      $this->path           = APP_DIR . $config['path'];
+      $this->prefix         = $config['prefix'];
+      $this->file_format    = $config['file_format'];
       $this->content_format = $config['content_format'];
-      $this->extension = $config['extension'];
+      $this->extension      = $config['extension'];
+
+      $this->checkPath();
    }
 
    public function emergency(string $message): bool {
@@ -103,15 +102,16 @@ class Log {
 
    private function writeFile(string $level, string $message): bool {
       if (is_array($message)) {
-         $message = serialize($message);
+         $message = json_encode($message, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
       }
 
       $message = '[' . date($this->content_format) . '] - [' . $level . '] ' . $message;
+      $name = $this->prefix . date($this->file_format) . $this->extension;
+      $path = rtrim($this->path, '/') . '/' . $name;
 
-      $this->checkPath();
-      $path = $this->path . '/' . $this->prefix . date($this->file_format) . $this->extension;
-      if (!file_put_contents($path, $message . "\n", FILE_APPEND | LOCK_EX)) {
-         throw new LogException('Log file write error [' . $path . ']');
+      $result = file_put_contents($path, $message . "\n", FILE_APPEND | LOCK_EX);
+      if ($result === false) {
+         throw new LogException('Log file [' . $path . '] write error');
       }
 
       return true;
@@ -119,11 +119,11 @@ class Log {
 
    private function checkPath(): void {
       if (!check_path($this->path)) {
-         throw new LogException('Log file upload directory [' . $this->path . '] is invalid');
+         throw new LogException('Log directory [' . $this->path . '] cannot be created');
       }
 
       if (!check_permission($this->path)) {
-         throw new LogException('Log file upload directory [' . $this->path . '] is not writable');
+         throw new LogException('Log directory [' . $this->path . '] not writable');
       }
    }
 }

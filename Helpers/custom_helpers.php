@@ -343,29 +343,27 @@ if (!function_exists('random_mnemonic')) {
 
 if (!function_exists('uri_get')) {
    function uri_get(): string {
-      $path = array_slice(explode('/', $_SERVER['SCRIPT_NAME']), 0, -1);
-      $path = implode('/', $path) . '/';
-      $uri = substr($_SERVER['REQUEST_URI'], strlen($path));
-
-      if (strpos($uri, '?') !== false) {
-         $uri = substr($uri, 0, strpos($uri, '?'));
-      }
-
-      return '/' . trim($uri, '/');
+      $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
+      return '/' . trim($path, '/');
    }
 }
 
 if (!function_exists('uri_parse')) {
    function uri_parse(string $uri, array $expressions): array {
-      $segments = explode('/', ltrim($uri, '/'));
+      $segments = explode('/', trim($uri, '/'));
+      $result = [];
 
-      return array_map(function ($segment) use ($expressions) {
-         if (preg_match('/[\[{\(](.*)[\]}\)]/U', $segment, $match)) {
+      foreach ($segments as $segment) {
+         if (preg_match('/^[\[{(]([a-zA-Z_][a-zA-Z0-9_]*)[\]})]$/', $segment, $match)) {
             $key = $match[1];
-            return $expressions[$key] ?? $segment;
+            $result[] = $expressions[$key] ?? $segment;
+            continue;
          }
-         return $segment;
-      }, $segments);
+
+         $result[] = $segment;
+      }
+
+      return $result;
    }
 }
 

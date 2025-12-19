@@ -26,119 +26,83 @@ class Session {
       $this->start();
    }
 
-   public function start(?string $name = null): void {
-      if ($this->status()) {
-         if (!hash_equals($this->read('session_hash'), $this->generateHash())) {
-            $this->destroy();
-         }
-      } else {
-         if (is_null($name)) {
-            $name = $this->config['session_name'];
-         }
-
-         session_start(['name' => $name]);
-         $this->save('session_hash', $this->generateHash());
-         $this->regenerate();
-      }
-   }
-
-   public function destroy(): void {
-      session_destroy();
-   }
-
-   public function save(string|array $name, mixed $data): void {
-      if (is_array($name)) {
-         foreach ($name as $key => $value) {
-            if (is_int($key)) {
-               $_SESSION[$value] = null;
-            } else {
-               $_SESSION[$key] = $value;
-            }
-         }
-      } else {
-         $_SESSION[$name] = $data;
-      }
-   }
-
-   public function push(string $name, array $data): void {
-      if ($this->exist($name) && is_array($this->read($name))) {
-         $this->save($name, array_merge($this->read($name), $data));
-      }
-   }
-
-   public function read(?string $name = null): mixed {
-      if (is_null($name)) {
-         return $_SESSION;
+   public function start(): void {
+      if ($this->isActive()) {
+         return;
       }
 
-      return $_SESSION[$name];
-   }
-
-   public function delete(string $name): void {
-      if ($this->exist($name)) {
-         unset($_SESSION[$name]);
-      }
-   }
-
-   public function exist(string $name): bool {
-      return isset($_SESSION[$name]);
-   }
-
-   public function flash(?string $data = null, ?string $url = null): ?string {
-      if (is_null($data)) {
-         if ($this->exist('session_flash')) {
-            $flash = $this->read('session_flash');
-            $this->delete('session_flash');
-
-            return $flash;
-         }
-      } else {
-         $this->save('session_flash', $data);
-
-         if (!is_null($url)) {
-            url_redirect($url);
-         }
-
-         return $this->read('session_flash');
-      }
-
-      return null;
-   }
-
-   public function status(): bool {
-      return session_status() === PHP_SESSION_ACTIVE;
+      session_name($this->config['session_name']);
+      session_start();
+      $this->regenerate();
    }
 
    public function regenerate(): void {
-      if ($this->status()) {
-         $this->save('session_regenerate', time());
+      if ($this->isActive()) {
          session_regenerate_id(true);
       }
    }
 
-   public function csrf(?string $token = null): bool|string {
-      if (is_null($token)) {
-         if ($this->status()) {
-            $token = bin2hex(random_bytes(32));
-            $this->save('session_csrf', $token);
-            return $token;
-         }
+   public function set(string $key, mixed $value): void {
+      $this->start();
+      $_SESSION[$key] = $value;
+   }
+
+   public function get(string $key, mixed $default = null): mixed {
+      $this->start();
+      return $_SESSION[$key] ?? $default;
+   }
+
+   public function has(string $key): bool {
+      $this->start();
+      return isset($_SESSION[$key]);
+   }
+
+   public function delete(string $key): void {
+      $this->start();
+      unset($_SESSION[$key]);
+   }
+
+   public function destroy(): void {
+      if ($this->isActive()) {
+         $_SESSION = [];
+         session_destroy();
+      }
+   }
+
+   public function flash(string $key, mixed $value = null): mixed {
+      $this->start();
+      if ($value === null) {
+         $data = $_SESSION['session_flash'][$key] ?? null;
+         unset($_SESSION['session_flash'][$key]);
+         return $data;
+      }
+
+      $_SESSION['session_flash'][$key] = $value;
+      return null;
+   }
+
+   public function csrf(): string {
+      $this->start();
+      if (!$this->has('session_csrf')) {
+         $_SESSION['session_csrf'] = bin2hex(random_bytes(32));
+      }
+
+      return $_SESSION['session_csrf'];
+   }
+
+   public function verifyCsrf(string $token): bool {
+      $this->start();
+      if (!$this->has('session_csrf')) {
          return false;
       }
 
-      if ($this->exist('session_csrf') && hash_equals($this->read('session_csrf'), $token)) {
-         $this->delete('session_csrf');
-         return true;
-      }
+      $valid = hash_equals($_SESSION['session_csrf'], $token);
+      unset($_SESSION['session_csrf']);
 
-      return false;
+      return $valid;
    }
 
-   private function generateHash(): string {
-      if (isset($_SERVER['REMOTE_ADDR']) && isset($_SERVER['HTTP_USER_AGENT'])) {
-         return hash_hmac('sha256', $_SERVER['REMOTE_ADDR'] . $this->config['encryption_key'] . $_SERVER['HTTP_USER_AGENT'], $this->config['encryption_key']);
-      }
-
-      return hash_hmac('sha256', $this->config['encryption_key'], $this->config['encryption_key']);
+   private function isActive(): bool {
+      return session_status() === PHP_SESSION_ACTIVE;
    }
 }

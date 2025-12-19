@@ -17,8 +17,8 @@ class Language {
    ) {
       $config = import_config('defines.language');
 
-      if ($this->session->exist('session_locale')) {
-         $this->locale = $this->session->read('session_locale');
+      if ($this->session->has('session_locale')) {
+         $this->locale = $this->session->get('session_locale');
       } else {
          $this->locale = $config['default'];
       }
@@ -29,9 +29,7 @@ class Language {
          $locale = LanguageEnum::resolve($locale);
       }
 
-      if ($this->session->status()) {
-         $this->session->save('session_locale', $locale);
-      }
+      $this->session->set('session_locale', $locale);
 
       $this->locale = $locale;
       return $this;
@@ -71,8 +69,8 @@ class Language {
          $this->translations[$file] = require_once $path;
       }
 
-      if ($this->session->exist('session_locale')) {
-         $session_locale = $this->session->read('session_locale');
+      if ($this->session->has('session_locale')) {
+         $session_locale = $this->session->get('session_locale');
          if ($session_locale !== $locale) {
             $this->locale = $session_locale;
          }

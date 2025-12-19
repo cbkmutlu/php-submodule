@@ -23,12 +23,12 @@ class Database {
    public function connect(?string $connection = null): self {
       $config = import_config('defines.database');
       $attr = [
-         PDO::ATTR_PERSISTENT => $config['persistent'],
-         PDO::ATTR_EMULATE_PREPARES => $config['prepares'],
-         PDO::ATTR_ERRMODE => $config['error_mode'],
+         PDO::ATTR_PERSISTENT         => $config['persistent'],
+         PDO::ATTR_EMULATE_PREPARES   => $config['prepares'],
+         PDO::ATTR_ERRMODE            => $config['error_mode'],
          PDO::ATTR_DEFAULT_FETCH_MODE => $config['fetch_mode'],
-         PDO::ATTR_STRINGIFY_FETCHES => $config['stringify'],
-         PDO::MYSQL_ATTR_FOUND_ROWS => $config['update_rows']
+         PDO::ATTR_STRINGIFY_FETCHES  => $config['stringify'],
+         PDO::MYSQL_ATTR_FOUND_ROWS   => $config['update_rows']
       ];
       $connection = is_null($connection) ? $config['default'] : $connection;
       $config = $config['connections'][$connection];

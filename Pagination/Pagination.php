@@ -57,17 +57,17 @@ class Pagination {
    public function getData(): array {
       $this->total_pages = ceil($this->total_items / $this->items_perpage);
       return [
-         'current_page' => $this->current_page,
-         'total_pages' => $this->total_pages,
+         'current_page'   => $this->current_page,
+         'total_pages'    => $this->total_pages,
          'items_per_page' => $this->items_perpage,
-         'total_items' => $this->total_items,
-         'has_previous' => $this->getPrevPage() !== null,
-         'has_next' => $this->getNextPage() !== null,
-         'previous_page' => $this->getPrevPage(),
-         'next_page' => $this->getNextPage(),
-         'first_item' => $this->getCurrentPageFirstItem(),
-         'last_item' => $this->getCurrentPageLastItem(),
-         'pages' => $this->getPages(),
+         'total_items'    => $this->total_items,
+         'has_previous'   => $this->getPrevPage() !== null,
+         'has_next'       => $this->getNextPage() !== null,
+         'previous_page'  => $this->getPrevPage(),
+         'next_page'      => $this->getNextPage(),
+         'first_item'     => $this->getCurrentPageFirstItem(),
+         'last_item'      => $this->getCurrentPageLastItem(),
+         'pages'          => $this->getPages()
       ];
    }
 
@@ -75,7 +75,7 @@ class Pagination {
       return [
          'number'  => $number,
          'url'     => sprintf($this->url_pattern, $number),
-         'current' => $current,
+         'current' => $current
       ];
    }
 
@@ -83,7 +83,7 @@ class Pagination {
       return [
          'number'  => '...',
          'url'     => null,
-         'current' => false,
+         'current' => false
       ];
    }
 

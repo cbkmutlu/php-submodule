@@ -317,11 +317,11 @@ class Image {
 
    private function checkPath(): void {
       if (!check_path($this->path)) {
-         throw new SystemException('Image file upload directory [' . $this->path . '] is invalid');
+         throw new SystemException('Image directory [' . $this->path . '] cannot be created');
       }
 
       if (!check_permission($this->path)) {
-         throw new SystemException('Image file upload directory [' . $this->path . '] is not writable');
+         throw new SystemException('Image directory [' . $this->path . '] not writable');
       }
    }
 

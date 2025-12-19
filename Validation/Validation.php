@@ -300,7 +300,7 @@ class Validation {
 
          // Other
          'regex'        => ':label formatı geçersiz.',
-         'default'      => ':label geçersiz.',
+         'default'      => ':label geçersiz.'
       ];
    }
 

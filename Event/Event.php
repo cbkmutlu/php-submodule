@@ -12,7 +12,7 @@ class Event {
    private $listeners;
 
    public function listener(string $event): self {
-      $listeners = import_config('services.listeners');
+      $listeners = import_config('defines.listeners');
       $this->listeners = $listeners[$event];
 
       return $this;

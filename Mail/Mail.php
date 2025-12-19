@@ -11,15 +11,16 @@ class Mail extends PHPMailer {
 
    public function __construct() {
       parent::__construct();
-      $config = import_config('defines.email');
       $this->isSMTP();
       $this->SMTPAuth = true;
       $this->isHTML(true);
-      $this->Host = $config['server'];
+
+      $config = import_config('defines.email');
+      $this->Host     = $config['server'];
       $this->Username = $config['username'];
       $this->Password = $config['userpass'];
-      $this->Port = $config['port'];
-      $this->CharSet = $config['charset'];
+      $this->Port     = $config['port'];
+      $this->CharSet  = $config['charset'];
    }
 
    public function setHost(string $host): self {

@@ -16,7 +16,7 @@ class Container {
    private $reflections;
 
    public function __construct() {
-      $this->providers = import_config('services.providers');
+      $this->providers = import_config('defines.providers');
    }
 
    public function register(): void {
@@ -40,7 +40,7 @@ class Container {
    public function set(string $name, object $service, bool $singleton): void {
       $this->services[$name] = [
          'definition' => $service,
-         'singleton' => $singleton,
+         'singleton' => $singleton
       ];
    }
 

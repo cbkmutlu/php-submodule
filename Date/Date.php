@@ -38,14 +38,13 @@ class Date {
    public function __construct(
       private Language $language
    ) {
-      $config = import_config('defines.language.locales')[$this->language->getLocale()];
-
-      $this->pattern = $config['pattern'];
-      $this->timezone = $config['timezone'];
-      $this->locale = $config['locale'];
+      $config          = import_config('defines.language.locales')[$this->language->getLocale()];
+      $this->pattern   = $config['pattern'];
+      $this->timezone  = $config['timezone'];
+      $this->locale    = $config['locale'];
       $this->date_type = $config['date_type'];
       $this->time_type = $config['time_type'];
-      $this->calendar = $config['calendar'];
+      $this->calendar  = $config['calendar'];
 
       $this->formatter = new IntlDateFormatter($this->locale, $this->date_type, $this->time_type, $this->timezone, $this->calendar, $this->pattern);
    }

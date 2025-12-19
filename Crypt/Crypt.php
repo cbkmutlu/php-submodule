@@ -14,11 +14,11 @@ class Crypt {
    private $algorithm;
 
    public function __construct() {
-      $config = import_config('defines.crypt');
-      $this->secret = $config['secret'];
-      $this->cipher = $config['cipher'];
-      $this->phrase = $config['phrase'];
-      $this->cost = $config['cost'];
+      $config          = import_config('defines.crypt');
+      $this->secret    = $config['secret'];
+      $this->cipher    = $config['cipher'];
+      $this->phrase    = $config['phrase'];
+      $this->cost      = $config['cost'];
       $this->algorithm = $config['algorithm'];
    }
 

@@ -22,13 +22,17 @@ class Request {
       $this->server = $_SERVER;
    }
 
-   public function user(?array $data = null): array {
-      if (is_null($data)) {
+   public function setUser(array $data): self {
+      $this->user = $data;
+      return $this;
+   }
+
+   public function getUser(?string $param = null): mixed {
+      if (is_null($param)) {
          return $this->user;
       }
 
-      $this->user = $data;
-      return $this->user;
+      return $this->user[$param] ?? null;
    }
 
    public function get(?string $param = null, $filter = true): mixed {
@@ -157,18 +161,6 @@ class Request {
       return $this->server('HTTP_HOST');
    }
 
-   public function pathname(): string {
-      $path = array_slice(explode('/', $this->server('SCRIPT_NAME')), 0, -1);
-      $path = implode('/', $path) . '/';
-      $uri = substr($this->server('REQUEST_URI'), strlen($path));
-
-      if (strpos($uri, '?') !== false) {
-         $uri = substr($uri, 0, strpos($uri, '?'));
-      }
-
-      return '/' . trim($uri, '/');
-   }
-
    public function origin(): string {
       return $this->protocol() . '://' . $this->host();
    }
@@ -264,8 +256,8 @@ class Request {
       return http_build_query($data);
    }
 
-   public function userAgent(): ?string {
-      return $this->server('HTTP_USER_AGENT') ?? null;
+   public function userAgent(): string {
+      return $this->server('HTTP_USER_AGENT') ?? 'UNKNOWN';
    }
 
    public function userIp(): string {
@@ -289,7 +281,7 @@ class Request {
          }
       }
 
-      return $this->server('REMOTE_ADDR') ?? '0.0.0.0';
+      return $this->server('REMOTE_ADDR') ?? 'UNKNOWN';
    }
 
    public function filter(mixed $data = null, bool $filter = false): mixed {
@@ -310,13 +302,13 @@ class Request {
    }
 
    public function isUri(): bool {
-      $url = $this->origin() . $this->pathname();
+      $url = $this->origin() . uri_get();
 
       if (filter_var($url, FILTER_VALIDATE_URL) === false) {
          return false;
       }
 
-      return preg_match('#^/[a-zA-Z0-9/_\-]*$#', $this->pathname()) === 1;
+      return preg_match('#^/[a-zA-Z0-9/_\-]*$#', uri_get()) === 1;
    }
 
    public function isJson(): bool {

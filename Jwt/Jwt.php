@@ -33,11 +33,11 @@ class Jwt {
    private $issuer;
 
    public function __construct() {
-      $config = import_config('defines.jwt');
-      $this->secret = $config['secret'];
+      $config          = import_config('defines.jwt');
+      $this->secret    = $config['secret'];
       $this->algorithm = $config['algorithm'];
-      $this->leeway = $config['leeway'];
-      $this->expire = $config['expire']['access'];
+      $this->leeway    = $config['leeway'];
+      $this->expire    = $config['expire']['access'];
    }
 
    public function createToken(array $payload, ?string $secret = null, ?string $algorithm = null, array $header = [], ?string $kid = null): string {

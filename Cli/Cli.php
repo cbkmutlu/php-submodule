@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace System\Cli;
 
 class Cli {
-   private $params;
    private $colors;
 
    public function __construct() {
@@ -36,8 +35,6 @@ class Cli {
    }
 
    public function run(array $params): string {
-      $this->params = $params;
-
       $command = $params[0];
       $param1 = $params[1] ?? null;
       $param2 = $params[2] ?? null;

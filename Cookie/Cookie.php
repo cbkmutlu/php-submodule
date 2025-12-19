@@ -17,67 +17,70 @@ class Cookie {
    private $samesite;
 
    public function __construct() {
-      $config = import_config('defines.cookie');
-      $this->encryption_key = $config['encryption_key'];
+      $config                = import_config('defines.cookie');
+      $this->encryption_key  = $config['encryption_key'];
       $this->cookie_security = $config['cookie_security'];
-      $this->httponly = $config['httponly'];
-      $this->secure = $config['secure'];
-      $this->separator = $config['separator'];
-      $this->path = $config['path'];
-      $this->domain = $config['domain'];
-      $this->samesite = $config['samesite'];
+      $this->httponly        = $config['httponly'];
+      $this->secure          = $config['secure'];
+      $this->separator       = $config['separator'];
+      $this->path            = $config['path'];
+      $this->domain          = $config['domain'];
+      $this->samesite        = $config['samesite'];
    }
 
-   public function save(string $name, string $content, int $time = 0): void {
-      if ($time > 0) {
-         $time = time() + ($time * 60 * 60); // 60 seconds * 60 minutes * $time hours
+   public function set(string $key, string $value, int $expire = 0): void {
+      if ($expire > 0) {
+         $expire = time() + ($expire * 60 * 60);
       }
 
       if ($this->cookie_security) {
-         setcookie($name, $content . $this->separator . hash_hmac('sha256', $content, $this->encryption_key), [
-            'expires'  => $time,
-            'path'     => $this->path,
-            'domain'   => $this->domain,
-            'secure'   => $this->secure,
-            'httponly' => $this->httponly,
-            'samesite' => $this->samesite
-         ]);
-      } else {
-         setcookie($name, $content, [
-            'expires'  => $time,
-            'path'     => $this->path,
-            'domain'   => $this->domain,
-            'secure'   => $this->secure,
-            'httponly' => $this->httponly,
-            'samesite' => $this->samesite
-         ]);
+         $value .= $this->separator . hash_hmac('sha256', $value, $this->encryption_key);
       }
+
+      setcookie($key, $value, [
+         'expires'  => $expire,
+         'path'     => $this->path,
+         'domain'   => $this->domain,
+         'secure'   => $this->secure,
+         'httponly' => $this->httponly,
+         'samesite' => $this->samesite
+      ]);
+
+      $_COOKIE[$key] = $value;
    }
 
-   public function read(string $name): string {
+   public function get(string $key, ?string $default = null): ?string {
+      if (!isset($_COOKIE[$key])) {
+         return $default;
+      }
+      $cookie = $_COOKIE[$key];
+
       if ($this->cookie_security) {
-         $parts = explode($this->separator, $_COOKIE[$name]);
+         $parts = explode($this->separator, $cookie, 2);
+         if (count($parts) !== 2) {
+            throw new SystemException("Cookie [$key] integrity check failed");
+         }
+
          [$data, $hash] = $parts;
-
          if (!hash_equals(hash_hmac('sha256', $data, $this->encryption_key), $hash)) {
-            throw new SystemException('Cookie [' . $name . '] integrity check failed');
+            throw new SystemException('Cookie [' . $key . '] integrity check failed');
          }
 
          return $data;
-      } else {
-         return $_COOKIE[$name];
+      }
+
+      return $cookie;
+   }
+
+   public function delete(string $key): void {
+      if ($this->has($key)) {
+         unset($_COOKIE[$key]);
+         setcookie($key, '', time() - 3600, $this->path, $this->domain, $this->secure, $this->httponly);
       }
    }
 
-   public function delete(string $name): void {
-      if ($this->exist($name)) {
-         unset($_COOKIE[$name]);
-         setcookie($name, '', time() - 3600, $this->path, $this->domain);
-      }
-   }
-
-   public function exist(string $name): bool {
-      return isset($_COOKIE[$name]);
+   public function has(string $key): bool {
+      return isset($_COOKIE[$key]);
    }
 
    public function setPath(string $path): self {

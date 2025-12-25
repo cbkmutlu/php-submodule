@@ -16,7 +16,7 @@ class Response {
       if (is_null($code)) {
          return http_response_code();
       }
-      return http_response_code($code);
+      return (int) http_response_code($code);
    }
 
    public function message(?int $code = null): string {

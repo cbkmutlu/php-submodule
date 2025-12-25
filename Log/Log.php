@@ -7,11 +7,11 @@ namespace System\Log;
 use System\Log\LogException;
 
 class Log {
-   private $path;
-   private $prefix;
-   private $file_format;
-   private $content_format;
-   private $extension;
+   private string $path;
+   private string $prefix;
+   private string $file_format;
+   private string $content_format;
+   private string $extension;
 
    public function __construct() {
       $config               = import_config('defines.log');
@@ -24,35 +24,35 @@ class Log {
       $this->checkPath();
    }
 
-   public function emergency(string $message): bool {
+   public function emergency(string|array $message): bool {
       return $this->writeFile('emergency', $message);
    }
 
-   public function alert(string $message): bool {
+   public function alert(string|array $message): bool {
       return $this->writeFile('alert', $message);
    }
 
-   public function critical(string $message): bool {
+   public function critical(string|array $message): bool {
       return $this->writeFile('critical', $message);
    }
 
-   public function error(string $message): bool {
+   public function error(string|array $message): bool {
       return $this->writeFile('error', $message);
    }
 
-   public function warning(string $message): bool {
+   public function warning(string|array $message): bool {
       return $this->writeFile('warning', $message);
    }
 
-   public function notice(string $message): bool {
+   public function notice(string|array $message): bool {
       return $this->writeFile('notice', $message);
    }
 
-   public function info(string $message): bool {
+   public function info(string|array $message): bool {
       return $this->writeFile('info', $message);
    }
 
-   public function debug(string $message): bool {
+   public function debug(string|array $message): bool {
       return $this->writeFile('debug', $message);
    }
 
@@ -100,12 +100,23 @@ class Log {
       return $this->extension;
    }
 
-   private function writeFile(string $level, string $message): bool {
+   /**
+    * Log mesajını dosyaya yazar.
+    *
+    * @param string $level Log seviyesi (emergency, alert, critical, error, warning, notice, info, debug)
+    * @param string|array $message Log mesajı. Eğer array ise JSON formatına çevrilir.
+    * @return bool
+    * @throws LogException
+    */
+   private function writeFile(string $level, string|array $message): bool {
       if (is_array($message)) {
          $message = json_encode($message, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+      } else {
+         $message = (string) $message;
       }
 
       $message = '[' . date($this->content_format) . '] - [' . $level . '] ' . $message;
+
       $name = $this->prefix . date($this->file_format) . $this->extension;
       $path = rtrim($this->path, '/') . '/' . $name;
 

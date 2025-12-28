@@ -8,8 +8,24 @@ use System\Language\Language;
 use System\Exception\SystemException;
 
 interface UploadAdapter {
-   public function upload(array $file, string $path, string $name): bool;
-   public function unlink(string|array $files, string $path): bool;
+   /**
+    * @param array $file $_FILES dizisi
+    * @param string $path Defines'daki upload path (örn: Public/upload)
+    * @param string $name Yeni dosya adı (örn: 123456789.jpg)
+    * @param string $dir Dosyanın yükleneceği dizin (örn: users)
+    *
+    * @return bool Dosya yükleme işlemi başarılıysa `true` döner
+    */
+   public function upload(array $file, string $path, string $name, string $dir = ''): bool;
+
+   /**
+    * @param string|array $files Dosya adı veya dosya adı dizisi
+    * @param string $path Defines'daki upload path (örn: Public/upload)
+    * @param string $dir Dosyanın silineceği dizin (örn: users)
+    *
+    * @return bool Dosya silme işlemi başarılıysa `true` döner
+    */
+   public function unlink(string|array $files, string $path, string $dir = ''): bool;
 }
 
 class Upload {
@@ -102,7 +118,7 @@ class Upload {
          }
 
          $name = bin2hex(random_bytes(16)) . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
-         $this->adapter->upload($file, $this->path, $name);
+         $this->adapter->upload($file, $this->path, $name, $this->dir);
          $result[] = $this->dir . '/' . $name;
       }
 
@@ -114,7 +130,7 @@ class Upload {
    }
 
    public function unlink(string|array $files): bool {
-      return $this->adapter->unlink($files, $this->path);
+      return $this->adapter->unlink($files, $this->path, $this->dir);
    }
 
    public function error(): array {

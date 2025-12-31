@@ -67,16 +67,15 @@ class Cli {
    }
 
    private function serve(?string $port = null): string {
-      if (!$port) {
-         $port = 8000;
+      $port = $port ?? 8000;
+      $path = realpath(__DIR__ . '/../../Public');
+
+      if (!$path) {
+         throw new \RuntimeException('Public directory not found');
       }
 
-      $cwd = getcwd();
-      chdir(getcwd());
-      $output = shell_exec('php -S 127.0.0.1:' . $port);
-      chdir($cwd);
-
-      return print_r($output);
+      $command = sprintf('php -S 127.0.0.1:%d -t %s %s', $port, escapeshellarg($path), escapeshellarg($path . '/index.php'));
+      return (string) shell_exec($command);
    }
 
    private function hash(string $value): string {
@@ -137,7 +136,7 @@ class Cli {
          foreach (glob(ROOT_DIR . $search . '/*.php') as $migration) {
             $filename = basename($migration);
             require_once $migration;
-               if (preg_match('/^' . $prefix . '_(\d{3})_/', $filename, $matches)) {
+            if (preg_match('/^' . $prefix . '_(\d{3})_/', $filename, $matches)) {
                $num = (int) $matches[1];
                if ($num > $max) {
                   $max = $num;

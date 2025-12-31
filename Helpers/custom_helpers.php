@@ -6,12 +6,12 @@ use System\Router\Router;
 use System\Exception\SystemException;
 
 if (!function_exists('dd')) {
-   function dd(mixed $data, bool $stop = false): void {
+   function dd(mixed $data, bool $stop = true): void {
       echo '<pre>';
       print_r($data);
       echo '</pre>';
 
-      if ($stop === true || ENV !== 'production') {
+      if ($stop) {
          exit();
       }
    }
@@ -213,7 +213,7 @@ if (!function_exists('import_asset')) {
    function import_asset(?string $file = null, mixed $version = null): mixed {
       if (!is_null($file)) {
          if (!file_exists(PUBLIC_DIR . $file)) {
-            throw new SystemException('File not found in Public directory [' . $file . ']');
+            throw new SystemException('File [' . $file . '] not found in Public directory');
          }
 
          if (!is_null($version)) {
@@ -232,7 +232,7 @@ if (!function_exists('import_config')) {
       [$file, $value] = explode('.', $params, 2);
 
       if (!file_exists($path = APP_DIR . 'Config/' . ucwords($file) . '.php')) {
-         throw new SystemException('File not found in Config directory [' . $path . ']');
+         throw new SystemException('File [' . $path . '] not found in Config directory');
       }
 
       $config = require $path;
@@ -240,7 +240,7 @@ if (!function_exists('import_config')) {
 
       foreach ($keys as $key) {
          if (!isset($config[$key])) {
-            throw new SystemException('Invalid key [' . $key . ']');
+            throw new SystemException('Invalid [' . $key . '] key');
          }
          $config = $config[$key];
       }
@@ -253,20 +253,39 @@ if (!function_exists('import_env')) {
    function import_env(string $file = '.env'): void {
       $path = ROOT_DIR . $file;
       if (!file_exists($path)) {
-         throw new SystemException('File not found [' . $file . ']');
+         throw new SystemException('File [' . $file . '] not found');
       }
 
-      $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-      foreach ($lines as $line) {
-         if (str_starts_with(trim($line), '#')) {
+      foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+         $line = trim($line);
+         if (str_starts_with($line, '#')) {
             continue;
          }
 
          [$key, $value] = explode('=', $line, 2);
          $key = trim($key);
+         $value = trim($value);
          $value = trim($value, "'\"");
          putenv($key . '=' . $value);
       }
+   }
+}
+
+if (!function_exists('get_env')) {
+   function get_env(string $key, mixed $default = null): mixed {
+      $value = getenv($key);
+
+      if ($value === false) {
+         return $default;
+      }
+
+      $value = strtolower($value);
+      return match (true) {
+         $value === 'true'  => true,
+         $value === 'false' => false,
+         $value === 'null'  => null,
+         default => $value,
+      };
    }
 }
 

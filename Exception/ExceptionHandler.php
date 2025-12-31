@@ -18,14 +18,14 @@ class ExceptionHandler {
    public function __construct(
       Response $response
    ) {
-      if (ENV === 'production') {
-         error_reporting(0);
-         ini_set('display_errors', 0);
-         ini_set('display_startup_errors', 0);
-      } else {
+      if (get_env('DEVELOPMENT')) {
          error_reporting(E_ALL);
          ini_set('display_errors', 1);
          ini_set('display_startup_errors', 1);
+      } else {
+         error_reporting(0);
+         ini_set('display_errors', 0);
+         ini_set('display_startup_errors', 0);
       }
       self::$response = $response;
    }
@@ -114,14 +114,13 @@ class ExceptionHandler {
       header('Access-Control-Allow-Credentials: ' . $config['allow-credentials']);
       header('Content-Type: text/html; charset=UTF-8');
 
-      if (ENV === 'production') {
-         throw $exception;
-      } else {
+      if (get_env('DEVELOPMENT')) {
          $whoops = new WhoopsRun;
          $whoops->pushHandler(new WhoopsPrettyPageHandler);
          $whoops->register();
          $whoops->sendHttpCode($code);
-         throw $exception;
       }
+
+      throw $exception;
    }
 }

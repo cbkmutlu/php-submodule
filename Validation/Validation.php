@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace System\Validation;
 
+use Egulias\EmailValidator\EmailValidator;
+use Egulias\EmailValidator\Validation\RFCValidation;
+use Egulias\EmailValidator\Validation\DNSCheckValidation;
+use Egulias\EmailValidator\Validation\MultipleValidationWithAnd;
+
+/**
+ * Data validation class
+ */
 class Validation {
    private array $errors = [];
    private array $labels = [];
@@ -19,6 +27,9 @@ class Validation {
 
    /**
     * Set validation data
+    *
+    * @param array $data Validation data
+    * @return self
     */
    public function data(array $data): self {
       $this->data = $data;
@@ -27,6 +38,9 @@ class Validation {
 
    /**
     * Set validation rules
+    *
+    * @param array $rules Validation rules
+    * @return self
     */
    public function rules(array $rules): self {
       $this->rules = $rules;
@@ -35,6 +49,9 @@ class Validation {
 
    /**
     * Set custom labels for fields
+    *
+    * @param array $labels Field labels
+    * @return self
     */
    public function labels(array $labels): self {
       $this->labels = $labels;
@@ -43,6 +60,9 @@ class Validation {
 
    /**
     * Set custom error messages
+    *
+    * @param array $messages Error messages
+    * @return self
     */
    public function messages(array $messages): self {
       $this->messages = array_merge($this->messages, $messages);
@@ -51,6 +71,8 @@ class Validation {
 
    /**
     * Get all errors
+    *
+    * @return array
     */
    public function errors(): array {
       return $this->errors;
@@ -59,7 +81,7 @@ class Validation {
    /**
     * Stop validation on first failure
     *
-    * @param bool $stop
+    * @param bool $stop Stop on first failure
     * @return self
     */
    public function stopOnFirstFail(bool $stop = true): self {
@@ -69,6 +91,8 @@ class Validation {
 
    /**
     * Handle the validation
+    *
+    * @return bool
     */
    public function handle(): bool {
       $this->errors = [];
@@ -86,6 +110,10 @@ class Validation {
 
    /**
     * Check a single field
+    *
+    * @param string $field Field name
+    * @param array $rules Validation rules
+    * @return void
     */
    private function checkField(string $field, array $rules): void {
       if (strpos($field, '*') !== false) {
@@ -107,6 +135,10 @@ class Validation {
 
    /**
     * Check wildcard fields
+    *
+    * @param string $field Field name
+    * @param array $rules Validation rules
+    * @return void
     */
    private function checkWildcardField(string $field, array $rules): void {
       $parts = explode('.', $field);
@@ -129,8 +161,13 @@ class Validation {
 
    /**
     * Expand wildcard paths
+    *
+    * @param array $parts Field parts
+    * @param array $data Data array
+    * @param string $prefix Prefix
+    * @return array
     */
-   private function expandWildcard(array $parts, $data, string $prefix = ''): array {
+   private function expandWildcard(array $parts, array $data, string $prefix = ''): array {
       $paths = [];
       $current = array_shift($parts);
 
@@ -160,6 +197,9 @@ class Validation {
 
    /**
     * Get field value using dot notation
+    *
+    * @param string $field Field name
+    * @return mixed
     */
    private function getFieldValue(string $field) {
       $keys = explode('.', $field);
@@ -178,6 +218,12 @@ class Validation {
 
    /**
     * Apply a validation rule
+    *
+    * @param string $field Field name
+    * @param mixed $value Field value
+    * @param string $rule Validation rule
+    * @param string $label Field label
+    * @return void
     */
    private function applyRule(string $field, $value, string $rule, string $label): void {
       $params = [];
@@ -203,6 +249,11 @@ class Validation {
 
    /**
     * Add a custom validation rule
+    *
+    * @param string $name Rule name
+    * @param callable $callback Validation callback
+    * @param string $message Error message
+    * @return self
     */
    public function addRule(string $name, callable $callback, string $message = ':label geçersiz.'): self {
       $this->customRules[$name] = $callback;
@@ -212,6 +263,12 @@ class Validation {
 
    /**
     * Add an error message
+    *
+    * @param string $field Field name
+    * @param string $rule Validation rule
+    * @param string $label Field label
+    * @param array $params Rule parameters
+    * @return void
     */
    private function addError(string $field, string $rule, string $label, array $params = []): void {
       $message = $this->messages[$rule] ?? $this->messages['default'];
@@ -238,6 +295,8 @@ class Validation {
 
    /**
     * Set default error messages
+    *
+    * @return void
     */
    private function setDefaultMessages(): void {
       $this->messages = [
@@ -396,12 +455,30 @@ class Validation {
 
    /**
     * Email validation
+    * Kullanım:
+    * - 'email'      : Sadece format kontrolü (RFC) - Login için
+    * - 'email:dns'  : Format + DNS kaydı kontrolü  - Register için
     */
-   private function validateEmail($value): bool {
+   private function validateEmail($value, array $params = []): bool {
       if (is_null($value) || $value === '') {
          return true;
       }
-      return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
+
+      $validations = [
+         new RFCValidation()
+      ];
+
+      if (in_array('dns', $params)) {
+         $validations[] = new DNSCheckValidation();
+      }
+
+      $validator = new EmailValidator();
+
+      try {
+         return $validator->isValid($value, new MultipleValidationWithAnd($validations));
+      } catch (\Exception $e) {
+         return !in_array('dns', $params);
+      }
    }
 
    /**

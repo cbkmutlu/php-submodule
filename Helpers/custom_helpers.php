@@ -279,7 +279,7 @@ if (!function_exists('get_env')) {
          return $default;
       }
 
-      $value = strtolower($value);
+      $value = trim($value);
       return match (true) {
          $value === 'true'  => true,
          $value === 'false' => false,

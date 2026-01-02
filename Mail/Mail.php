@@ -21,6 +21,10 @@ class Mail extends PHPMailer {
       $this->Password = $config['userpass'];
       $this->Port     = $config['port'];
       $this->CharSet  = $config['charset'];
+
+      if (isset($config['from'])) {
+         $this->setFrom($config['from']['address'], $config['from']['name']);
+      }
    }
 
    public function setHost(string $host): self {

@@ -282,7 +282,7 @@ class Validation {
 
          foreach ($params as $index => $param) {
             $message = str_replace(':' . $index, $param, $message);
-            $message = str_replace(':value', $param, $message);
+            $message = str_replace(':value', $this->labels[$param] ?? $param, $message);
          }
       }
 
@@ -814,7 +814,7 @@ class Validation {
       $length = strlen($value);
 
       for ($i = 0; $i < $length; $i++) {
-         $digit = (int)$value[$length - $i - 1];
+         $digit = (int) $value[$length - $i - 1];
          if ($i % 2 == 1) {
             $digit *= 2;
             if ($digit > 9) {

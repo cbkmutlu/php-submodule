@@ -100,7 +100,10 @@ class ExceptionHandler {
       $code = $exception->getCode() ?: 500;
       $message = $exception->getMessage() ?: 'Internal Server Error';
       $message = json_decode($message) ?? $message;
-      self::$response->json(null, null, $message, $code);
+      self::$response->json([
+         'data' => null,
+         'error' => $message
+      ], $code);
    }
 
    public static function resultWeb(Throwable $exception): void {

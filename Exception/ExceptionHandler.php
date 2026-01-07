@@ -6,31 +6,20 @@ namespace System\Exception;
 
 use Throwable;
 use ErrorException;
-
+use System\Http\Request;
 use System\Http\Response;
 
 use Whoops\Run as WhoopsRun;
 use Whoops\Handler\PrettyPageHandler as WhoopsPrettyPageHandler;
 
 class ExceptionHandler {
-   private static Response $response;
-
    public function __construct(
-      Response $response
+      protected Response $response,
+      protected Request $request
    ) {
-      if (get_env('DEVELOPMENT')) {
-         error_reporting(E_ALL);
-         ini_set('display_errors', 1);
-         ini_set('display_startup_errors', 1);
-      } else {
-         error_reporting(0);
-         ini_set('display_errors', 0);
-         ini_set('display_startup_errors', 0);
-      }
-      self::$response = $response;
    }
 
-   public static function handleError(int $errno, string $errstr, string $errfile, int $errline): void {
+   public function handleError(int $errno, string $errstr, string $errfile, int $errline): void {
       $report = error_reporting();
       if ($report & $errno) {
          $exit = false;
@@ -75,38 +64,33 @@ class ExceptionHandler {
                break;
          }
 
-         $exception = new ErrorException($type . ': ' . $errstr, 0, $errno, $errfile, $errline);
-
          if ($exit) {
             exit();
-         } else {
-            throw $exception;
          }
+
+         throw new ErrorException($type . ': ' . $errstr, 0, $errno, $errfile, $errline);
       }
    }
 
-   public static function handleException(Throwable $exception): void {
-      $content = isset($_SERVER['CONTENT_TYPE']) && str_contains($_SERVER['CONTENT_TYPE'], 'application/json');
-      $accept = isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json');
-
-      if ($content || $accept) {
-         self::resultApi($exception);
+   public function handleException(Throwable $exception): void {
+      if ($this->request->isJson()) {
+         $this->resultApi($exception);
       } else {
-         self::resultWeb($exception);
+         $this->resultWeb($exception);
       }
    }
 
-   public static function resultApi(Throwable $exception): void {
+   private function resultApi(Throwable $exception): void {
       $code = $exception->getCode() ?: 500;
       $message = $exception->getMessage() ?: 'Internal Server Error';
       $message = json_decode($message) ?? $message;
-      self::$response->json([
+      $this->response->json([
          'data' => null,
          'error' => $message
       ], $code);
    }
 
-   public static function resultWeb(Throwable $exception): void {
+   private function resultWeb(Throwable $exception): void {
       $code = $exception->getCode() ?: 500;
       http_response_code($code);
 
@@ -117,13 +101,12 @@ class ExceptionHandler {
       header('Access-Control-Allow-Credentials: ' . $config['allow-credentials']);
       header('Content-Type: text/html; charset=UTF-8');
 
-      if (get_env('DEVELOPMENT')) {
+      if (get_env('APP_ENV') === 'development') {
          $whoops = new WhoopsRun;
          $whoops->pushHandler(new WhoopsPrettyPageHandler);
          $whoops->register();
          $whoops->sendHttpCode($code);
+         throw $exception;
       }
-
-      throw $exception;
    }
 }

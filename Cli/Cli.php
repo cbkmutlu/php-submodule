@@ -74,6 +74,7 @@ class Cli {
          throw new \RuntimeException('Public directory not found');
       }
 
+      putenv('APP_ENV=development');
       $command = sprintf('php -S 127.0.0.1:%d -t %s %s', $port, escapeshellarg($path), escapeshellarg($path . '/index.php'));
       return (string) shell_exec($command);
    }

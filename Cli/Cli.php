@@ -66,16 +66,37 @@ class Cli {
          $this->info('[migration refresh]', 'light_blue') . "\n";
    }
 
-   private function serve(?string $port = null): string {
-      $port = $port ?? 8000;
-      $path = realpath(__DIR__ . '/../../Public');
+   private function serve(?string $host = null): string {
+      $defaultIp   = '127.0.0.1';
+      $defaultPort = 8000;
 
+      $ip   = $defaultIp;
+      $port = $defaultPort;
+
+      if ($host) {
+         if (str_contains($host, ':')) {
+            [$ip, $port] = explode(':', $host, 2);
+            $port = (int) $port ?: $defaultPort;
+         } else {
+            $ip = $host;
+         }
+      }
+
+      $path = realpath(__DIR__ . '/../../Public');
       if (!$path) {
          throw new \RuntimeException('Public directory not found');
       }
 
       putenv('APP_ENV=development');
-      $command = sprintf('php -S 127.0.0.1:%d -t %s %s', $port, escapeshellarg($path), escapeshellarg($path . '/index.php'));
+
+      $command = sprintf(
+         'php -S %s:%d -t %s %s',
+         escapeshellarg($ip),
+         $port,
+         escapeshellarg($path),
+         escapeshellarg($path . '/index.php')
+      );
+
       return (string) shell_exec($command);
    }
 

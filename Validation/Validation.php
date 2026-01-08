@@ -142,8 +142,13 @@ class Validation {
     */
    private function checkWildcardField(string $field, array $rules): void {
       $parts = explode('.', $field);
-      $data = $this->data;
-      $paths = $this->expandWildcard($parts, $data);
+      $root = $parts[0];
+
+      if (!array_key_exists($root, $this->data) || !is_array($this->data[$root])) {
+         return;
+      }
+
+      $paths = $this->expandWildcard($parts, $this->data);
 
       foreach ($paths as $path) {
          $value = $this->getFieldValue($path);

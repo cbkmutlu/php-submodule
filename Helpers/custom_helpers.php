@@ -256,8 +256,13 @@ if (!function_exists('import_env')) {
       }
 
       $path = ROOT_DIR . $file;
-      if (!file_exists($path)) {
-         throw new SystemException('File [' . $file . '] not found');
+      $local = ROOT_DIR . '.env.local';
+      if (file_exists($local)) {
+         $path = $local;
+      } else {
+         if (!file_exists($path)) {
+            throw new SystemException('File [' . $file . '] not found');
+         }
       }
 
       foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {

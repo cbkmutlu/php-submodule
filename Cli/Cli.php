@@ -27,6 +27,7 @@ class Cli {
 
       try {
          $config = import_config('defines.app');
+         putenv('APP_ENV=development');
          import_env($config['env']);
       } catch (\Throwable $th) {
          print($this->error($th->getMessage()));
@@ -86,8 +87,6 @@ class Cli {
       if (!$path) {
          throw new \RuntimeException('Public directory not found');
       }
-
-      putenv('APP_ENV=development');
 
       $command = sprintf(
          'php -S %s:%d -t %s %s',

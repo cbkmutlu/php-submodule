@@ -14,7 +14,7 @@ class Database {
    private PDOStatement $state;
    private $query;
    private $total = 0;
-   private $progress;
+   private $progress = 0;
    private $prefix;
    private $positional;
    private $table;
@@ -30,7 +30,7 @@ class Database {
          PDO::ATTR_STRINGIFY_FETCHES  => $config['stringify'],
          PDO::MYSQL_ATTR_FOUND_ROWS   => $config['update_rows']
       ];
-      $connection = is_null($connection) ? $config['default'] : $connection;
+      $connection = $connection ?? $config['default'];
       $config = $config['connections'][$connection];
 
       if (!$this->prefix) {
@@ -168,59 +168,75 @@ class Database {
 
    public function transaction(): bool {
       try {
-         if (!$this->progress++) {
+         if ($this->progress === 0) {
             $this->pdo()->setAttribute(PDO::ATTR_AUTOCOMMIT, false);
-            return $this->pdo()->beginTransaction();
+            $this->pdo()->beginTransaction();
+         } else {
+            $this->pdo()->exec('SAVEPOINT trans' . ($this->progress + 1));
          }
 
-         $this->pdo()->exec('SAVEPOINT trans' . $this->progress);
-         return $this->progress >= 0;
+         $this->progress++;
+         return true;
       } catch (PDOException $e) {
-         throw new DatabaseException('Transaction ' . $e->getMessage());
+         $this->progress = 0;
+         throw new DatabaseException('Transaction failed: ' . $e->getMessage());
       }
    }
 
    public function commit(): bool {
       try {
-         if (!--$this->progress) {
+         if ($this->progress <= 0) {
+            return false;
+         }
+
+         $this->progress--;
+         if ($this->progress === 0) {
             return $this->pdo()->commit();
          }
 
-         return $this->progress >= 0;
+         return true;
       } catch (PDOException $e) {
-         throw new DatabaseException('Commit ' . $e->getMessage());
+         $this->progress = 0;
+         throw new DatabaseException('Commit failed: ' . $e->getMessage());
       }
    }
 
    public function rollback(): bool {
       try {
-         if (--$this->progress) {
-            $this->pdo()->exec('ROLLBACK TO trans' . ($this->progress + 1));
-            return true;
+         if ($this->progress <= 0) {
+            return false;
          }
 
-         return $this->pdo()->rollBack();
+         if ($this->progress > 1) {
+            $this->pdo()->exec('ROLLBACK TO SAVEPOINT trans' . $this->progress);
+         } else {
+            $this->pdo()->rollBack();
+         }
+
+         $this->progress--;
+         return true;
       } catch (PDOException $e) {
-         throw new DatabaseException('Rollback ' . $e->getMessage());
+         $this->progress = 0;
+         throw new DatabaseException('Rollback failed: ' . $e->getMessage());
       }
    }
 
    public function prefix(string $prefix): self {
       $this->prefix = $prefix;
+
       return $this;
    }
 
    public function fetchAll(?string $fetch = null, mixed $args = null, bool $all = true): mixed {
       try {
-         if (!is_null($fetch)) {
+         if ($fetch !== null) {
             $mode = 'PDO::' . $fetch;
             if (!defined($mode)) {
                throw new DatabaseException("Invalid fetch mode: $mode");
             }
 
             $constant = constant($mode);
-
-            if (($constant === PDO::FETCH_CLASS || $constant === PDO::FETCH_COLUMN) && !is_null($args)) {
+            if (($constant === PDO::FETCH_CLASS || $constant === PDO::FETCH_COLUMN) && $args !== null) {
                $this->state->setFetchMode($constant, $args);
             } else {
                $this->state->setFetchMode($constant);
@@ -237,20 +253,14 @@ class Database {
       return $this->fetchAll($fetch, $args, false);
    }
 
-   public function lastInsertId(bool $int = true): int|string {
-      try {
-         return $int ? (int) $this->pdo()->lastInsertId() : $this->pdo()->lastInsertId();
-      } catch (PDOException $e) {
-         throw new DatabaseException('Get Last Id ' . $e->getMessage());
-      }
+   public function lastInsertId(): int {
+      return (int) $this->pdo()->lastInsertId();
    }
 
    public function lastInsertRow(?string $table = null): mixed {
-      if (is_null($table)) {
-         $table = $this->table;
-      }
-
+      $table = $table ?? $this->table;
       $result = $this->query("SELECT * FROM {$this->prefix}{$table} WHERE id=" . $this->lastInsertId());
+
       return $result->fetch();
    }
 
@@ -263,11 +273,7 @@ class Database {
    }
 
    public function affectedRows(): int {
-      try {
-         return $this->state->rowCount();
-      } catch (PDOException $e) {
-         throw new DatabaseException('Get Affected Rows ' . $e->getMessage());
-      }
+      return $this->state->rowCount();
    }
 
    public function __destruct() {
@@ -302,22 +308,25 @@ class Database {
    }
 
    public function orderBy(?array $data = null): self {
-      if (!is_null($data)) {
-         $orderBy = [];
-         foreach ($data as $key => $value) {
-            // (column = value)
-            if (preg_match('/^\((\w+)\s*=\s*(\d+)\)$/', $key, $matches)) {
-               $col = $matches[1];
-               $num = $matches[2];
-               $orderBy[] = "(`{$col}` = {$num})";
-               continue;
-            }
-
-            // column value
-            $orderBy[] = "`{$key}` {$value}";
-         }
-         $this->query .= " ORDER BY " . implode(', ', $orderBy);
+      if ($data === null) {
+         return $this;
       }
+
+      $orderBy = [];
+      foreach ($data as $key => $value) {
+         // (column = value)
+         if (preg_match('/^\((\w+)\s*=\s*(\d+)\)$/', $key, $matches)) {
+            $col = $matches[1];
+            $num = $matches[2];
+            $orderBy[] = "(`{$col}` = {$num})";
+            continue;
+         }
+
+         // column value
+         $orderBy[] = "`{$key}` {$value}";
+      }
+      $this->query .= " ORDER BY " . implode(', ', $orderBy);
+
       return $this;
    }
 

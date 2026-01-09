@@ -372,7 +372,7 @@ class Validation {
     * Required validation
     */
    private function validateRequired($value): bool {
-      if (is_null($value)) {
+      if ($value === null) {
          return false;
       }
       if (is_string($value) && trim($value) === '') {
@@ -393,7 +393,7 @@ class Validation {
       foreach ($params as $fieldName) {
          $otherValue = $this->getFieldValue($fieldName);
 
-         if (!is_null($otherValue) && $otherValue !== '') {
+         if ($otherValue !== null && $otherValue !== '') {
             $hasAnyField = true;
             break;
          }
@@ -413,7 +413,7 @@ class Validation {
       foreach ($params as $fieldName) {
          $otherValue = $this->getFieldValue($fieldName);
 
-         if (is_null($otherValue) || $otherValue === '') {
+         if ($otherValue === null || $otherValue === '') {
             return $this->validateRequired($value);
          }
       }
@@ -428,7 +428,7 @@ class Validation {
       foreach ($params as $fieldName) {
          $otherValue = $this->getFieldValue($fieldName);
 
-         if (is_null($otherValue) || $otherValue === '') {
+         if ($otherValue === null || $otherValue === '') {
             return true;
          }
       }
@@ -443,7 +443,7 @@ class Validation {
       foreach ($params as $fieldName) {
          $otherValue = $this->getFieldValue($fieldName);
 
-         if (!is_null($otherValue) && $otherValue !== '') {
+         if ($otherValue !== null && $otherValue !== '') {
             return true;
          }
       }
@@ -465,7 +465,7 @@ class Validation {
     * - 'email:dns'  : Format + DNS kaydı kontrolü  - Register için
     */
    private function validateEmail($value, array $params = []): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -490,7 +490,7 @@ class Validation {
     * Numeric validation
     */
    private function validateNumeric($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return is_numeric($value);
@@ -500,7 +500,7 @@ class Validation {
     * Integer validation
     */
    private function validateInteger($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return filter_var($value, FILTER_VALIDATE_INT) !== false;
@@ -510,7 +510,7 @@ class Validation {
     * Float validation
     */
    private function validateFloat($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return filter_var($value, FILTER_VALIDATE_FLOAT) !== false;
@@ -520,7 +520,7 @@ class Validation {
     * String validation
     */
    private function validateString($value): bool {
-      if (is_null($value)) {
+      if ($value === null) {
          return true;
       }
       return is_string($value);
@@ -530,7 +530,7 @@ class Validation {
     * Array validation
     */
    private function validateArray($value): bool {
-      if (is_null($value)) {
+      if ($value === null) {
          return true;
       }
       return is_array($value);
@@ -540,7 +540,7 @@ class Validation {
     * Boolean validation
     */
    private function validateBoolean($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return in_array($value, [true, false, 0, 1, '0', '1'], true);
@@ -550,7 +550,7 @@ class Validation {
     * Minimum value/length validation
     */
    private function validateMin($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -575,7 +575,7 @@ class Validation {
     * Maximum value/length validation
     */
    private function validateMax($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -600,7 +600,7 @@ class Validation {
     * Between validation
     */
    private function validateBetween($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -628,7 +628,7 @@ class Validation {
     * Exact validation
     */
    private function validateExact($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -653,7 +653,7 @@ class Validation {
     * Contains validation
     */
    private function validateContains($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -678,7 +678,7 @@ class Validation {
     * Not contains validation
     */
    private function validateNotContains($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -703,7 +703,7 @@ class Validation {
     * Start with validation
     */
    private function validateStartWith($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -728,7 +728,7 @@ class Validation {
     * End with validation
     */
    private function validateEndWith($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -755,7 +755,7 @@ class Validation {
     * In validation (value must be in the list)
     */
    private function validateIn($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return in_array($value, $params, true);
@@ -765,7 +765,7 @@ class Validation {
     * Not in validation (value must not be in the list)
     */
    private function validateNotIn($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return !in_array($value, $params, true);
@@ -775,7 +775,7 @@ class Validation {
     * URL validation
     */
    private function validateUrl($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return filter_var($value, FILTER_VALIDATE_URL) !== false;
@@ -785,7 +785,7 @@ class Validation {
     * Date validation
     */
    private function validateDate($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -810,7 +810,7 @@ class Validation {
     * Credit card validation
     */
    private function validateCreditCard($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -836,7 +836,7 @@ class Validation {
     * Mimes validation
     */
    private function validateMimes($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -856,7 +856,7 @@ class Validation {
     * Min size validation
     */
    private function validateMinSize($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -877,7 +877,7 @@ class Validation {
     * Max size validation
     */
    private function validateMaxSize($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -898,7 +898,7 @@ class Validation {
     * Regex validation
     */
    private function validateRegex($value, array $params): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       $pattern = $params[0] ?? '';
@@ -936,7 +936,7 @@ class Validation {
     * Alpha validation (only letters)
     */
    private function validateAlpha($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return preg_match('/^[\pL\pM]+$/u', $value) === 1;
@@ -946,7 +946,7 @@ class Validation {
     * Alphanumeric validation (only letters and numbers)
     */
    private function validateAlphanum($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return preg_match('/^[\pL\pM\pN]+$/u', $value) === 1;
@@ -956,7 +956,7 @@ class Validation {
     * Alpha dash validation (letters, numbers, dashes, underscores)
     */
    private function validateAlphaDash($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return preg_match('/^[\pL\pM\pN_-]+$/u', $value) === 1;
@@ -966,7 +966,7 @@ class Validation {
     * JSON validation
     */
    private function validateJson($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
 
@@ -982,7 +982,7 @@ class Validation {
     * IP validation
     */
    private function validateIp($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return filter_var($value, FILTER_VALIDATE_IP) !== false;
@@ -992,7 +992,7 @@ class Validation {
     * IPv4 validation
     */
    private function validateIpv4($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
@@ -1002,7 +1002,7 @@ class Validation {
     * IPv6 validation
     */
    private function validateIpv6($value): bool {
-      if (is_null($value) || $value === '') {
+      if ($value === null || $value === '') {
          return true;
       }
       return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;

@@ -38,23 +38,29 @@ if (!function_exists('check_equal')) {
 
 if (!function_exists('check_path')) {
    function check_path(string $path, int $permissions = 0755): bool {
-      if (!is_dir($path) && !mkdir($path, $permissions, true)) {
+      if (is_dir($path)) {
+         return true;
+      }
+
+      if (file_exists($path)) {
          return false;
       }
 
-      return true;
+      return mkdir($path, $permissions, true);
    }
 }
 
 if (!function_exists('check_permission')) {
    function check_permission(string $path, int $permissions = 0755): bool {
-      if (!is_readable($path) || !is_writable($path)) {
-         if (!chmod($path, $permissions)) {
-            return false;
-         }
+      if (!file_exists($path)) {
+         return false;
       }
 
-      return true;
+      if (is_writable($path) && is_readable($path)) {
+         return true;
+      }
+
+      return chmod($path, $permissions);
    }
 }
 
@@ -211,31 +217,34 @@ if (!function_exists('escape_html')) {
 
 if (!function_exists('import_asset')) {
    function import_asset(?string $file = null, mixed $version = null): mixed {
-      if (!is_null($file)) {
-         if (!file_exists(PUBLIC_DIR . $file)) {
-            throw new SystemException('File [' . $file . '] not found in Public directory');
-         }
 
-         if (!is_null($version)) {
-            return PUBLIC_DIR . $file . '?' . $version;
-         }
-
-         return PUBLIC_DIR . $file;
+      if ($file === null) {
+         return BASE_URL;
       }
 
-      return PUBLIC_DIR;
+      if (!is_file(PUBLIC_DIR . $file)) {
+         throw new SystemException('Asset [' . $file . '] not found');
+      }
+
+      return BASE_URL . $file . ($version ? '?v=' . $version : '');
    }
 }
 
 if (!function_exists('import_config')) {
    function import_config(string $params): array {
       [$file, $value] = explode('.', $params, 2);
+      $path = APP_DIR . 'Config/' . ucfirst($file) . '.php';
 
-      if (!file_exists($path = APP_DIR . 'Config/' . ucwords($file) . '.php')) {
-         throw new SystemException('File [' . $path . '] not found in Config directory');
+      if (!is_file($path)) {
+         throw new SystemException('Config file [' . $path . '] not found');
       }
 
       $config = require $path;
+
+      if (!is_array($config)) {
+         throw new SystemException('Config file [' . $path . '] must return an array');
+      }
+
       $keys = explode('.', $value);
 
       foreach ($keys as $key) {
@@ -257,10 +266,10 @@ if (!function_exists('import_env')) {
 
       $path = ROOT_DIR . $file;
       $local = ROOT_DIR . '.env.local';
-      if (file_exists($local)) {
+      if (is_file($local)) {
          $path = $local;
       } else {
-         if (!file_exists($path)) {
+         if (!is_file($path)) {
             throw new SystemException('File [' . $file . '] not found');
          }
       }

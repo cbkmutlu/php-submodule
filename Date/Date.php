@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace System\Date;
 
+use DateTime;
 use DateTimeZone;
 use IntlDateFormatter;
 use System\Language\Language;
@@ -33,6 +34,8 @@ class Date {
    private $timestamp;
    private $pattern;
    private $formatter;
+
+   /** @var DateTime */
    private $datetime;
 
    public function __construct(
@@ -50,100 +53,158 @@ class Date {
    }
 
    public function getDate(?string $pattern = null): ?string {
+      if ($this->datetime === null) {
+         return null;
+      }
       $this->formatter->setPattern($pattern ?? $this->pattern);
       return $this->formatter->format($this->datetime) ?: null;
    }
 
    public function getTimestamp(bool $micro = false): ?int {
-      if (!is_null($this->datetime)) {
-         return $micro ? ($this->datetime->getTimestamp() * 1000) + intval($this->datetime->format('u') / 1000) : $this->datetime->getTimestamp();
+      if ($this->datetime === null) {
+         return null;
       }
-      return null;
+
+      return $micro ? ($this->timestamp * 1000) + intval($this->datetime->format('u') / 1000) : $this->timestamp;
    }
 
    public function getYear(): ?string {
-      return $this->datetime->format('Y') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('Y');
    }
 
    public function getMonth(): ?string {
-      return $this->datetime->format('m') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('m');
    }
 
    public function getMonthString(bool $short = false): ?string {
+      if ($this->datetime === null) {
+         return null;
+      }
+
       $this->formatter->setPattern($short ? 'MMM' : 'MMMM');
-      return $this->formatter->format($this->datetime) ?: null;
+      return $this->formatter->format($this->datetime);
    }
 
    public function getDay(): ?string {
-      return $this->datetime->format('d') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('d');
    }
 
    public function getDayString(bool $short = false): ?string {
+      if ($this->datetime === null) {
+         return null;
+      }
+
       $this->formatter->setPattern($short ? 'EEE' : 'EEEE');
-      return $this->formatter->format($this->datetime) ?: null;
+      return $this->formatter->format($this->datetime);
    }
 
    public function getHour(bool $mode = true): ?string {
-      return $this->datetime->format($mode ? 'H' : 'h') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format($mode ? 'H' : 'h');
    }
 
    public function getMinute(): ?string {
-      return $this->datetime->format('i') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('i');
    }
 
    public function getSecond(): ?string {
-      return $this->datetime->format('s') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('s');
    }
 
    public function getMicroSecond(): ?string {
-      return $this->datetime->format('u') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('u');
    }
 
    public function getDayOfWeek(): ?string {
-      return $this->datetime->format('w') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('w');
    }
 
    public function getDayOfYear(): ?string {
-      return $this->datetime->format('z') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('z');
    }
 
    public function getWeekOfYear(): ?string {
-      return $this->datetime->format('W') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('W');
    }
 
    public function getDaysInMonth(): ?string {
-      return $this->datetime->format('t') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return $this->datetime->format('t');
    }
 
    public function isLeapYear(): ?bool {
-      return (bool) $this->datetime->format('L') ?: null;
+      if ($this->datetime === null) {
+         return null;
+      }
+
+      return (bool) $this->datetime->format('L');
    }
 
    public function setDate(mixed $date, ?string $format = null): self {
-      if (is_null($date)) {
+      if ($date === null) {
          return $this;
       }
 
       $clone = clone $this;
-
-      if (is_null($format)) {
-         $clone->datetime = date_create($date, new DateTimeZone($clone->timezone));
-         $clone->timestamp = $clone->datetime->getTimestamp();
+      if ($format === null) {
+         $datetime = date_create($date, new DateTimeZone($clone->timezone));
       } else {
-         $d = date_create_from_format($format, $date, new DateTimeZone($clone->timezone));
-         if ($d) {
-            $clone->datetime = $d;
-            $clone->timestamp = $d->getTimestamp();
-         } else {
-            throw new SystemException('Invalid date format');
-         }
+         $datetime = date_create_from_format($format, $date, new DateTimeZone($clone->timezone));
       }
 
+      if ($datetime === false) {
+         throw new SystemException('Invalid date format');
+      }
+
+      $clone->datetime = $datetime;
+      $clone->timestamp = $datetime->getTimestamp();
       return $clone;
    }
 
    public function setTimestamp(int|float $timestamp): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->timestamp = $timestamp;
          $this->datetime->setTimestamp($timestamp);
       }
@@ -151,7 +212,7 @@ class Date {
    }
 
    public function setTimezone(string $timezone): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->datetime->setTimezone(new DateTimeZone($timezone));
          $this->formatter->setTimeZone(new DateTimeZone($timezone));
       }
@@ -159,7 +220,7 @@ class Date {
    }
 
    public function setLocale(string $locale): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->formatter = new IntlDateFormatter($locale, $this->date_type, $this->time_type, $this->timezone, $this->calendar);
          $this->pattern = $this->formatter->getPattern();
       }
@@ -167,7 +228,7 @@ class Date {
    }
 
    public function setYear(int $year): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->datetime->setDate($year, (int) $this->getMonth(), (int) $this->getDay());
          $this->timestamp = $this->datetime->getTimestamp();
       }
@@ -175,7 +236,7 @@ class Date {
    }
 
    public function setMonth(int $month): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->datetime->setDate((int) $this->getYear(), $month, (int) $this->getDay());
          $this->timestamp = $this->datetime->getTimestamp();
       }
@@ -183,7 +244,7 @@ class Date {
    }
 
    public function setDay(int $day): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->datetime->setDate((int) $this->getYear(), (int) $this->getMonth(), $day);
          $this->timestamp = $this->datetime->getTimestamp();
       }
@@ -191,7 +252,7 @@ class Date {
    }
 
    public function setHour(int $hour): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->datetime->setTime($hour, (int) $this->getMinute(), (int) $this->getSecond());
          $this->timestamp = $this->datetime->getTimestamp();
       }
@@ -199,7 +260,7 @@ class Date {
    }
 
    public function setMinute(int $minute): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->datetime->setTime((int) $this->getHour(), $minute, (int) $this->getSecond());
          $this->timestamp = $this->datetime->getTimestamp();
       }
@@ -207,7 +268,7 @@ class Date {
    }
 
    public function setSecond(int $second): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->datetime->setTime((int) $this->getHour(), (int) $this->getMinute(), $second);
          $this->timestamp = $this->datetime->getTimestamp();
       }
@@ -215,7 +276,7 @@ class Date {
    }
 
    public function modifyDate(string $modify): self {
-      if (!is_null($this->datetime)) {
+      if ($this->datetime !== null) {
          $this->datetime->modify($modify);
          $this->timestamp = $this->datetime->getTimestamp();
       }
@@ -223,7 +284,7 @@ class Date {
    }
 
    public function compareDate(Date $date): array {
-      if (is_null($this->datetime) || is_null($date->datetime)) {
+      if ($this->datetime === null || $date->datetime === null) {
          return [];
       }
 

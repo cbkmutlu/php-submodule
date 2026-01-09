@@ -30,8 +30,8 @@ class Language {
       }
 
       $this->session->set('session_locale', $locale);
-
       $this->locale = $locale;
+
       return $this;
    }
 
@@ -40,31 +40,27 @@ class Language {
    }
 
    public function module(string $params, ?array $printf = null, ?string $locale = null): string {
-      if (is_null($locale)) {
-         $locale = $this->locale;
-      }
-
+      $locale = $locale ?? $this->locale;
       [$file, $key] = explode('.', $params);
       $path = APP_DIR . 'Modules/' . strtolower($file) . '/Languages/' . strtolower($locale) . '.php';
       $file = $locale . '_module_' . strtolower($file);
+
       return $this->checkFile($file, $path, $key, $printf, $locale);
    }
 
    public function system(string $params, ?array $printf = null, ?string $locale = null): string {
-      if (is_null($locale)) {
-         $locale = $this->locale;
-      }
-
+      $locale = $locale ?? $this->locale;
       [$file, $key] = explode('.', $params);
       $path = SYSTEM_DIR . 'Language/' . $locale . '/' . strtolower($file) . '.php';
       $file = $locale . '_system_' . strtolower($file);
+
       return $this->checkFile($file, $path, $key, $printf, $locale);
    }
 
    private function checkFile(string $file, string $path, string $key, ?array $printf, ?string $locale): string {
       if (!isset($this->translations[$file])) {
-         if (!file_exists($path)) {
-            throw new SystemException('Language file not found [' . $path . ']');
+         if (!is_file($path)) {
+            throw new SystemException('Language file [' . $path . '] not found');
          }
          $this->translations[$file] = require_once $path;
       }
@@ -79,11 +75,8 @@ class Language {
       if (!isset($this->translations[$file][$key])) {
          return $key;
       }
-
       $message = $this->translations[$file][$key];
-      if (is_array($printf)) {
-         return vsprintf($message, $printf);
-      }
-      return $message;
+
+      return is_array($printf) ? vsprintf($message, $printf) : $message;
    }
 }

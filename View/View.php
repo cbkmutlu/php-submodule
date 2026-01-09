@@ -10,8 +10,8 @@ class View {
    private $theme;
 
    public function import(string $theme, array $data = [], bool $cache = false): void {
-      [$module, $file] = explode('@', $theme);
-      if (is_null($this->theme)) {
+      [$module, $file] = explode('@', $theme, 2);
+      if ($this->theme === null) {
          $path = APP_DIR . 'Modules/' . ucfirst($module) . '/Views/';
       } else {
          $path = APP_DIR . 'Modules/' . ucfirst($module) . '/Views/' . $this->theme . '/';
@@ -26,8 +26,8 @@ class View {
    }
 
    public function render(string $theme, array $data = [], bool $cache = false): string {
-      [$module, $template] = explode('@', $theme);
-      if (is_null($this->theme)) {
+      [$module, $template] = explode('@', $theme, 2);
+      if ($this->theme === null) {
          $path = APP_DIR . 'Modules/' . ucfirst($module) . '/Views/';
       } else {
          $path = APP_DIR . 'Modules/' . ucfirst($module) . '/Views/' . $this->theme . '/';

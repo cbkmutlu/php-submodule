@@ -116,7 +116,7 @@ class Cli {
 
    private function module(string $module): string {
       $path = 'App/Modules/' . $module;
-      if (file_exists($path . '/' . $module . 'Controller.php')) {
+      if (is_file($path . '/' . $module . 'Controller.php')) {
          return $this->error('Module already exists: ' . $path);
       }
 
@@ -182,7 +182,7 @@ class Cli {
 
       // run, rollback, reset
       $json = 'App/Config/migration.json';
-      if (!file_exists($json)) {
+      if (!is_file($json)) {
          file_put_contents($json, json_encode([], JSON_PRETTY_PRINT));
       }
 

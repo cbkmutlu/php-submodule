@@ -28,57 +28,57 @@ class Request {
    }
 
    public function getUser(?string $param = null): mixed {
-      if (is_null($param)) {
+      if ($param === null) {
          return $this->user;
       }
 
       return $this->user[$param] ?? null;
    }
 
-   public function get(?string $param = null, $filter = true): mixed {
-      if (is_null($param)) {
+   public function get(?string $param = null, bool $filter = true): mixed {
+      if ($param === null) {
          return $this->filter($this->get, $filter);
       }
 
-      return isset($this->get[$param]) ? $this->filter($this->get[$param], $filter) : null;
+      return $this->filter($this->get[$param] ?? null, $filter);
    }
 
-   public function post(?string $param = null, $filter = true): mixed {
-      if (is_null($param)) {
+   public function post(?string $param = null, bool $filter = true): mixed {
+      if ($param === null) {
          return $this->filter($this->post, $filter);
       }
 
-      return isset($this->post[$param]) ? $this->filter($this->post[$param], $filter) : null;
+      return $this->filter($this->post[$param] ?? null, $filter);
    }
 
-   public function put(?string $param = null, $filter = true): mixed {
+   public function put(?string $param = null, bool $filter = true): mixed {
       parse_str(file_get_contents('php://input'), $_PUT);
 
-      if (is_null($param)) {
+      if ($param === null) {
          return $this->filter($_PUT, $filter);
       }
 
-      return isset($_PUT[$param]) ? $this->filter($_PUT[$param], $filter) : null;
+      return $this->filter($_PUT[$param] ?? null, $filter);
    }
 
-   public function patch(?string $param = null, $filter = true): mixed {
+   public function patch(?string $param = null, bool $filter = true): mixed {
       parse_str(file_get_contents('php://input'), $_PATCH);
 
-      if (is_null($param)) {
+      if ($param === null) {
          return $this->filter($_PATCH, $filter);
       }
 
-      return isset($_PATCH[$param]) ? $this->filter($_PATCH[$param], $filter) : null;
+      return $this->filter($_PATCH[$param] ?? null, $filter);
    }
 
-   public function delete(?string $param = null, $filter = true): mixed {
+   public function delete(?string $param = null, bool $filter = true): mixed {
       parse_str(file_get_contents('php://input'), $_DELETE);
 
-      if (is_null($param)) {
+      if ($param === null) {
          return $this->filter($_DELETE, $filter);
       }
 
-      return isset($_DELETE[$param]) ? $this->filter($_DELETE[$param], $filter) : null;
+      return $this->filter($_DELETE[$param] ?? null, $filter);
    }
 
    public function json(?string $param = null, bool $filter = true): mixed {
@@ -95,35 +95,35 @@ class Request {
          }
       }
 
-      if (is_null($param)) {
+      if ($param === null) {
          return $this->filter($body, $filter);
       }
 
-      return isset($body[$param]) ? $this->filter($body[$param], $filter) : null;
+      return $this->filter($body[$param] ?? null, $filter);
    }
 
    public function files(?string $param = null): mixed {
-      if (is_null($param)) {
+      if ($param === null) {
          return $this->files;
       }
 
-      return isset($this->files[$param]) ? $this->files[$param] : null;
+      return $this->files[$param] ?? null;
    }
 
    public function server(?string $param = null): mixed {
-      if (is_null($param)) {
+      if ($param === null) {
          return $this->server;
       }
 
-      return isset($this->server[$param]) ? $this->server[$param] : null;
+      return $this->server[$param] ?? null;
    }
 
    public function cookie(?string $param = null): mixed {
-      if (is_null($param)) {
+      if ($param === null) {
          return $this->cookie;
       }
 
-      return isset($this->cookie[$param]) ? $this->cookie[$param] : null;
+      return $this->cookie[$param] ?? null;
    }
 
    public function all(bool $filter = true): mixed {
@@ -133,7 +133,7 @@ class Request {
    public function headers(?string $param = null): mixed {
       $headers = getallheaders();
 
-      if (is_null($param)) {
+      if ($param === null) {
          return $headers;
       }
 
@@ -174,7 +174,7 @@ class Request {
    }
 
    public function content(?int $index = null): mixed {
-      if (is_null($index)) {
+      if ($index === null) {
          return $this->headers('Accept');
       }
 
@@ -233,9 +233,7 @@ class Request {
 
       if ($index === -1) {
          return end($segments);
-      }
-
-      if (is_null($index)) {
+      } else if ($index === null) {
          return $segments;
       }
 
@@ -249,7 +247,7 @@ class Request {
    }
 
    public function query(?array $data = null): mixed {
-      if (is_null($data)) {
+      if ($data === null) {
          return $this->server('QUERY_STRING');
       }
 
@@ -285,7 +283,7 @@ class Request {
    }
 
    public function filter(mixed $data = null, bool $filter = false): mixed {
-      if (!$filter || is_null($data)) {
+      if ($filter === false || $data === null) {
          return $data;
       }
 

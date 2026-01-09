@@ -41,13 +41,8 @@ class Jwt {
    }
 
    public function createToken(array $payload, ?string $secret = null, ?string $algorithm = null, array $header = [], ?string $kid = null): string {
-      if (is_null($secret)) {
-         $secret = $this->secret;
-      }
-
-      if (is_null($algorithm)) {
-         $algorithm = $this->algorithm;
-      }
+      $secret = $secret ?? $this->secret;
+      $algorithm = $algorithm ?? $this->algorithm;
 
       $this->validateAlgorithm($algorithm);
 
@@ -73,14 +68,11 @@ class Jwt {
    }
 
    public function parseToken(?string $token = null, ?string $secret = null): array {
-      if (is_null($token)) {
+      if ($token === null) {
          throw new JwtException('Token not found or invalid', 401);
       }
 
-      if (is_null($secret)) {
-         $secret = $this->secret;
-      }
-
+      $secret = $secret ?? $this->secret;
       $parts = explode('.', $token);
       if (count($parts) !== 3) {
          throw new JwtException('Invalid token', 401);
@@ -188,7 +180,7 @@ class Jwt {
    }
 
    private function validateAlgorithm(?string $algorithm = null): void {
-      if (is_null($algorithm)) {
+      if ($algorithm === null) {
          throw new JwtException('Empty algorithm', 500);
       }
 

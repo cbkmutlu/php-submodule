@@ -23,39 +23,36 @@ class Crypt {
    }
 
    public function encode(string $value, ?string $secret = null): string {
-      if (is_null($secret)) {
-         $secret = $this->secret;
-      }
+      $secret = $secret ?? $this->secret;
+      $iv_length = openssl_cipher_iv_length($this->cipher);
+      $iv = random_bytes($iv_length);
+      $key = hash($this->phrase, $secret, true);
+      $encrypted = openssl_encrypt($value, $this->cipher, $key, 0, $iv);
 
-      $iv = random_bytes(openssl_cipher_iv_length($this->cipher));
-      $encrypted = openssl_encrypt($value, $this->cipher, hash($this->phrase, $secret, true), 0, $iv);
+      if ($encrypted === false) {
+         throw new SystemException('Encryption failed');
+      }
 
       return $this->base64Encode($iv . $encrypted);
    }
 
    public function decode(string $value, ?string $secret = null): string {
-      if (is_null($secret)) {
-         $secret = $this->secret;
-      }
-
-      $data = $this->base64Decode($value);
+      $secret = $secret ?? $this->secret;
+      $value = $this->base64Decode($value);
       $iv_length = openssl_cipher_iv_length($this->cipher);
-      $iv = substr($data, 0, $iv_length);
-      $encrypted = substr($data, $iv_length);
-      $decrypted = openssl_decrypt($encrypted, $this->cipher, hash($this->phrase, $secret, true), 0, $iv);
+      $iv = substr($value, 0, $iv_length);
+      $key = hash($this->phrase, $secret, true);
+      $decrypted = openssl_decrypt(substr($value, $iv_length), $this->cipher, $key, 0, $iv);
 
-      if (!$decrypted) {
-         throw new SystemException('Decoding failed');
+      if ($decrypted === false) {
+         throw new SystemException('Decryption failed');
       }
 
       return trim($decrypted);
    }
 
    public function hash(string $value, array $options = []): string {
-      if (!isset($options['cost'])) {
-         $options['cost'] = $this->cost;
-      }
-
+      $options['cost'] = $options['cost'] ?? $this->cost;
       $hash = password_hash($value, $this->algorithm, $options);
 
       if (!$hash) {
@@ -70,9 +67,7 @@ class Crypt {
    }
 
    public function refresh(string $hash, array $options = []): bool {
-      if (!isset($options['cost'])) {
-         $options['cost'] = $this->cost;
-      }
+      $options['cost'] = $options['cost'] ?? $this->cost;
 
       return password_needs_rehash($hash, $this->algorithm, $options);
    }

@@ -54,14 +54,14 @@ class Image {
    }
 
    public function resize(?int $width = null, ?int $height = null, ?int $x = null, ?int $y = null, bool $crop = false): self {
-      if (!$this->image || (is_null($width) && is_null($height))) {
+      if (!$this->image || ($width === null && $height === null)) {
          return $this;
       }
 
-      if ($width && is_null($height)) {
+      if ($width && $height === null) {
          $ratio = $width / $this->width;
          $height = (int) round($this->height * $ratio);
-      } elseif ($height && is_null($width)) {
+      } elseif ($height && $width === null) {
          $ratio = $height / $this->height;
          $width = (int) round($this->width * $ratio);
       }
@@ -183,7 +183,7 @@ class Image {
          return false;
       }
 
-      if (is_null($mime) || !in_array($mime, self::SUPPORTED_MIMES)) {
+      if ($mime === null || !in_array($mime, self::SUPPORTED_MIMES)) {
          $mime = $this->mime;
       }
 
@@ -207,7 +207,7 @@ class Image {
          return;
       }
 
-      if (is_null($mime) || !in_array($mime, self::SUPPORTED_MIMES)) {
+      if ($mime === null || !in_array($mime, self::SUPPORTED_MIMES)) {
          $mime = $this->mime;
       }
 
@@ -262,8 +262,8 @@ class Image {
       $background = imagecolorallocatealpha($image, ...$this->getColor($this->background));
       imagefill($image, 0, 0, $background);
 
-      $x = is_null($x) ? (int) (($this->width - $width) / 2) : $x;
-      $y = is_null($y) ? (int) (($this->height - $height) / 2) : $y;
+      $x = $x === null ? (int) (($this->width - $width) / 2) : $x;
+      $y = $y === null ? (int) (($this->height - $height) / 2) : $y;
 
       $srcX = (int) max(0, $x);
       $srcY = (int) max(0, $y);
@@ -303,8 +303,8 @@ class Image {
          $resizeHeight = $height;
       }
 
-      $x = is_null($x) ? (int) (($width - $resizeWidth) / 2) : $x;
-      $y = is_null($y) ? (int) (($height - $resizeHeight) / 2) : $y;
+      $x = $x === null ? (int) (($width - $resizeWidth) / 2) : $x;
+      $y = $y === null ? (int) (($height - $resizeHeight) / 2) : $y;
 
       imagecopyresampled($image, $this->image, $x, $y, 0, 0, $resizeWidth, $resizeHeight, $this->width, $this->height);
 

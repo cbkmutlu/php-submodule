@@ -39,7 +39,7 @@ class Upload {
    private int $min_size = 0;
    private array $error = [];
    private string $path;
-   private string $dir = '';
+   private ?string $dir = null;
    private UploadAdapter $adapter;
 
    public function __construct(
@@ -130,7 +130,7 @@ class Upload {
       return $this;
    }
 
-   public function setDir(string $dir): self {
+   public function setDir(?string $dir = null): self {
       $this->dir = $dir;
       return $this;
    }

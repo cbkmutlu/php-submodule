@@ -16,7 +16,7 @@ interface UploadAdapter {
     *
     * @return bool Dosya yükleme işlemi başarılıysa `true` döner
     */
-   public function upload(array $file, string $path, string $name, string $dir = ''): bool;
+   public function upload(array $file, string $name, string $path, ?string $dir = null): string;
 
    /**
     * @param string|array $files Dosya adı veya dosya adı dizisi
@@ -25,7 +25,7 @@ interface UploadAdapter {
     *
     * @return bool Dosya silme işlemi başarılıysa `true` döner
     */
-   public function unlink(string|array $files, string $path, string $dir = ''): bool;
+   public function unlink(string $file, string $path): bool;
 }
 
 class Upload {
@@ -46,41 +46,14 @@ class Upload {
       private Language $language
    ) {
       $config              = import_config('defines.upload');
-      $this->adapter       = new $config['adapter']();
-      $this->allowed_types = $config['allowed_types'];
-      $this->allowed_mimes = $config['allowed_mimes'];
-      $this->path          = ROOT_DIR . $config['path'];
-      $this->checkPath();
+      $default             = $config['default'];
+      $this->adapter       = new $config[$default]['adapter']();
+      $this->path          = $config[$default]['path'] ?? $config['path'];
+      $this->allowed_types = $config[$default]['allowed_types'] ?? $config['allowed_types'];
+      $this->allowed_mimes = $config[$default]['allowed_mimes'] ?? $config['allowed_mimes'];
    }
 
-   public function setPath(string $path): self {
-      $this->path = ROOT_DIR . $path;
-      $this->checkPath();
-      return $this;
-   }
-
-   public function getPath(): string {
-      return $this->path;
-   }
-
-   public function setDir(string $dir): self {
-      $this->dir = $dir;
-      $this->path .= '/' . $dir;
-      $this->checkPath();
-      return $this;
-   }
-
-   private function checkPath(): void {
-      if (!check_path($this->path)) {
-         throw new SystemException('Upload directory [' . $this->path . '] cannot be created');
-      }
-
-      if (!check_permission($this->path)) {
-         throw new SystemException('Upload directory [' . $this->path . '] is not writable');
-      }
-   }
-
-   public function handle(array $files): array {
+   public function handle(array $files, ?callable $setName = null): array {
       $this->error = [];
 
       $result = [];
@@ -117,9 +90,13 @@ class Upload {
             continue;
          }
 
-         $name = bin2hex(random_bytes(16)) . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
-         $this->adapter->upload($file, $this->path, $name, $this->dir);
-         $result[] = $this->dir . '/' . $name;
+         if ($setName) {
+            $name = $setName($file, $i);
+         } else {
+            $name = bin2hex(random_bytes(16)) . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+         }
+
+         $result[] = $this->adapter->upload($file, $name, $this->path, $this->dir);
       }
 
       if (empty($result) && !empty($this->error)) {
@@ -130,16 +107,41 @@ class Upload {
    }
 
    public function unlink(string|array $files): bool {
-      return $this->adapter->unlink($files, $this->path, $this->dir);
+      $files = (array) $files;
+
+      foreach ($files as $file) {
+         if (empty($file)) {
+            continue;
+         }
+
+         $this->adapter->unlink($file, $this->path);
+      }
+
+      return true;
    }
 
    public function error(): array {
       return $this->error;
    }
 
+
    public function setAdapter(UploadAdapter $adapter): self {
       $this->adapter = $adapter;
       return $this;
+   }
+
+   public function setDir(string $dir): self {
+      $this->dir = $dir;
+      return $this;
+   }
+
+   public function setPath(string $path): self {
+      $this->path = $path;
+      return $this;
+   }
+
+   public function getPath(): string {
+      return $this->path;
    }
 
    public function setAllowedTypes(array $types): self {

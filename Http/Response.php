@@ -13,7 +13,14 @@ class Response {
    }
 
    public function status(?int $code = null): int {
-      return $code === null ? http_response_code() : http_response_code($code);
+      if ($code !== null) {
+         http_response_code($code);
+         return $code;
+      }
+
+      $current = http_response_code();
+
+      return $current === false ? 200 : $current;
    }
 
    public function message(?int $code = null): string {

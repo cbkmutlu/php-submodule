@@ -393,8 +393,8 @@ class Database {
                $clauses[] = "`{$key}` = CASE `{$value[1]}` {$cases} END";
             }
 
-            // key => ['NOW()']
-            else if (is_string($value[0]) && preg_match('/^NOW(\(\d+\))?$/i', $value[0])) {
+            // key => ['NOW()'], key => ['NOW(3)']
+            else if (is_string($value[0]) && preg_match('/^NOW\((?:[0-6])?\)$/i', $value[0])) {
                $clauses[] = "`{$key}` = {$value[0]}";
             }
 
@@ -444,8 +444,8 @@ class Database {
             // key => [value]
             if (is_array($value)) {
 
-               // key => ['NOW()']
-               if (is_string($value[0]) && preg_match('/^NOW(\(\d+\))?$/i', $value[0])) {
+               // key => ['NOW()'], key => ['NOW(3)']
+               if (is_string($value[0]) && preg_match('/^NOW\((?:[0-6])?\)$/i', $value[0])) {
                   $values[] = $value[0];
                }
 

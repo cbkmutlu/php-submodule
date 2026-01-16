@@ -30,7 +30,7 @@ class Image {
       ini_set('gd.jpeg_ignore_warning', '1');
    }
 
-   public function data(string $path): self {
+   public function load(string $path): self {
       $image = file_get_contents($path, false, stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]));
       if ($image === false) {
          throw new SystemException('Could not load image [' . $path . ']');
@@ -55,7 +55,7 @@ class Image {
 
    public function resize(?int $width = null, ?int $height = null, ?int $x = null, ?int $y = null, bool $crop = false): self {
       if (!$this->image || ($width === null && $height === null)) {
-         return $this;
+         throw new SystemException('Image not loaded');
       }
 
       if ($width && $height === null) {
@@ -91,7 +91,7 @@ class Image {
 
    public function text(string $text, int $x, int $y, array $options = []): self {
       if (!$this->image) {
-         return $this;
+         throw new SystemException('Image not loaded');
       }
 
       $defaults = [
@@ -180,7 +180,7 @@ class Image {
 
    public function save(string $file, ?string $mime = null): bool {
       if (!$this->image) {
-         return false;
+         throw new SystemException('Image not loaded');
       }
 
       if ($mime === null || !in_array($mime, self::SUPPORTED_MIMES)) {
@@ -204,7 +204,7 @@ class Image {
 
    public function show(?string $mime = null): void {
       if (!$this->image || headers_sent()) {
-         return;
+         throw new SystemException('Image not loaded');
       }
 
       if ($mime === null || !in_array($mime, self::SUPPORTED_MIMES)) {
@@ -322,12 +322,6 @@ class Image {
 
       if (!check_permission($this->path)) {
          throw new SystemException('Image directory [' . $this->path . '] not writable');
-      }
-   }
-
-   public function __destruct() {
-      if ($this->image) {
-         imagedestroy($this->image);
       }
    }
 }

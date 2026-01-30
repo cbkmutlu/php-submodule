@@ -42,7 +42,7 @@ class Cli {
       if ($command === 'serve') {
          // Override environment for local server
          putenv('APP_ENV=development');
-         import_env();
+         import_env('.env.development');
          return $this->serve($param1);
       } else if ($command === 'module') {
          return $this->module($param1);

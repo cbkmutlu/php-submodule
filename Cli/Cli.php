@@ -193,8 +193,28 @@ class Cli {
          return $value === $count;
       });
       $migrate = false;
+      $output = '';
 
-      foreach (glob(ROOT_DIR . $location . '/*.php') as $migration) {
+      // Get migration files
+      $migrationFiles = glob(ROOT_DIR . $location . '/*.php');
+
+      // Reset and rollback sort
+      if ($param1 === 'reset' || $param1 === 'rollback') {
+         $migrationFiles = array_reverse($migrationFiles);
+      }
+
+      // Reset için FK kontrollerini devre dışı bırak
+      $db = null;
+      if ($param1 === 'reset') {
+         try {
+            $db = new \System\Database\Database();
+            $db->pdo()->exec('SET FOREIGN_KEY_CHECKS = 0');
+         } catch (\Exception $e) {
+            return $this->error('Database connection failed: ' . $e->getMessage());
+         }
+      }
+
+      foreach ($migrationFiles as $migration) {
          require_once $migration;
 
          $class = substr(basename($migration), 15, -4);
@@ -210,30 +230,40 @@ class Cli {
                   $instance->up();
                   $migrations[$class] = $count + 1;
                   $migrate = true;
+                  $output .= $this->success('✓ ' . $class) . "\n";
                }
             } else if ($param1 === 'rollback') {
                if (isset($last[$class])) {
                   $instance->down();
                   unset($migrations[$class]);
                   $migrate = true;
+                  $output .= $this->success('✓ Rolled back: ' . $class) . "\n";
                }
             } else if ($param1 === 'reset') {
                if (isset($migrations[$class])) {
                   $instance->down();
                   unset($migrations[$class]);
                   $migrate = true;
+                  $output .= $this->success('✓ Dropped: ' . $class) . "\n";
                }
             } else {
                return $this->error('Invalid migration command');
             }
          } catch (\Exception $e) {
-            return $this->error('Migration failed: ' . $e->getMessage());
+            if ($param1 === 'reset' && $db !== null) {
+               $db->pdo()->exec('SET FOREIGN_KEY_CHECKS = 1');
+            }
+            return $output . $this->error('Migration failed [' . $class . ']: ' . $e->getMessage());
          }
+      }
+
+      if ($param1 === 'reset' && $db !== null) {
+         $db->pdo()->exec('SET FOREIGN_KEY_CHECKS = 1');
       }
 
       if ($migrate) {
          file_put_contents($json, json_encode($migrations, JSON_PRETTY_PRINT));
-         return $this->info('Migration successfully completed');
+         return $output . $this->info('Migration successfully completed');
       } else {
          return $this->error('No migration to run');
       }

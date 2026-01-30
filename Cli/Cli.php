@@ -59,6 +59,7 @@ class Cli {
 
    private function help(): string {
       return
+         $this->info('APP_ENV', 'light_blue') . "\t\t\t" . get_env('APP_ENV') . "\n" .
          $this->info('[hash]', 'light_blue') . "\t\t\t" . 'hash 123456' . "\n" .
          $this->info('[key]', 'light_blue') . "\t\t\t" . 'key' . "\n" .
          $this->info('[module]', 'light_blue') . "\t\t" . 'module User' . "\n" .

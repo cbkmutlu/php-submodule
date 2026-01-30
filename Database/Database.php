@@ -394,7 +394,7 @@ class Database {
             }
 
             // key => ['NOW()'], key => ['NOW(3)']
-            else if (is_string($value[0]) && preg_match('/^NOW\((?:[0-6])?\)$/i', $value[0])) {
+            elseif (is_string($value[0]) && preg_match('/^NOW\((?:[0-6])?\)$/i', $value[0])) {
                $clauses[] = "`{$key}` = {$value[0]}";
             }
 
@@ -405,7 +405,7 @@ class Database {
          }
 
          // key
-         else if (is_int($key)) {
+         elseif (is_int($key)) {
             $clauses[] = "`{$value}` = :{$value}";
          }
 

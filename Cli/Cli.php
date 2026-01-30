@@ -252,14 +252,14 @@ class Cli {
                   $migrate = true;
                   $output .= $this->success('✓ ' . $class) . "\n";
                }
-            } else if ($param1 === 'rollback') {
+            } elseif ($param1 === 'rollback') {
                if (isset($last[$class])) {
                   $instance->down();
                   unset($migrations[$class]);
                   $migrate = true;
                   $output .= $this->success('✓ Rolled back: ' . $class) . "\n";
                }
-            } else if ($param1 === 'reset') {
+            } elseif ($param1 === 'reset') {
                if (isset($migrations[$class])) {
                   $instance->down();
                   unset($migrations[$class]);

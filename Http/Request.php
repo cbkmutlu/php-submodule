@@ -189,7 +189,7 @@ class Request {
       $auth = null;
       if ($this->server('Authorization')) {
          $auth = $this->server['Authorization'];
-      } else if ($this->server('HTTP_AUTHORIZATION')) {
+      } elseif ($this->server('HTTP_AUTHORIZATION')) {
          $auth = $this->server['HTTP_AUTHORIZATION'];
       } else {
          if (function_exists('apache_request_headers')) {
@@ -233,7 +233,7 @@ class Request {
 
       if ($index === -1) {
          return end($segments);
-      } else if ($index === null) {
+      } elseif ($index === null) {
          return $segments;
       }
 

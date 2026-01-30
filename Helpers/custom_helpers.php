@@ -260,13 +260,18 @@ if (!function_exists('import_config')) {
 
 if (!function_exists('import_env')) {
    function import_env(string $file = '.env'): void {
+      if (get_env('APP_ENV') === 'development') {
+         $file = '.env.development';
+      }
+
       $path = ROOT_DIR . $file;
       $local = ROOT_DIR . '.env.local';
-
       if (is_file($local)) {
          $path = $local;
-      } elseif (!is_file($path)) {
-         throw new SystemException('File [' . $file . '] not found');
+      } else {
+         if (!is_file($path)) {
+            throw new SystemException('File [' . $file . '] not found');
+         }
       }
 
       foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {

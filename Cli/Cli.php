@@ -6,6 +6,7 @@ namespace System\Cli;
 
 class Cli {
    private $colors;
+   private $config;
 
    public function __construct() {
       $this->colors['black']         = '0;30';
@@ -24,50 +25,66 @@ class Cli {
       $this->colors['yellow']        = '1;33';
       $this->colors['light_gray']    = '0;37';
       $this->colors['white']         = '1;37';
-
-      try {
-         $config = import_config('defines.app');
-         import_env($config['env']);
-      } catch (\Throwable $th) {
-         print($this->error($th->getMessage()));
-         exit();
-      }
+      $this->config = import_config('defines.app');
    }
 
    public function run(array $params): string {
+      [$isProduction, $params] = $this->parseArgs($params);
+
+      if (!$isProduction) {
+         putenv('APP_ENV=development');
+      }
+      import_env($this->config['env']);
+
       $command = $params[0] ?? null;
-      $param1 = $params[1] ?? null;
-      $param2 = $params[2] ?? null;
+      $param1  = $params[1] ?? null;
+      $param2  = $params[2] ?? null;
 
       if ($command === 'serve') {
-         // Override environment for local server
-         putenv('APP_ENV=development');
-         import_env('.env.development');
          return $this->serve($param1);
-      } else if ($command === 'module') {
+      } elseif ($command === 'module') {
          return $this->module($param1);
-      } else if ($command === 'hash' && $param1) {
+      } elseif ($command === 'hash' && $param1) {
          return $this->hash($param1);
-      } else if ($command === 'key') {
+      } elseif ($command === 'key') {
          return $this->key();
-      } else if ($command === 'migration' && $param1) {
+      } elseif ($command === 'migration' && $param1) {
          return $this->migration($param1, $param2);
       } else {
          return $this->help();
       }
    }
 
+   private function parseArgs(array $params): array {
+      $flags = [
+         '-p',
+         '--production',
+      ];
+
+      $env = null;
+      $clean = [];
+
+      foreach ($params as $param) {
+         if (in_array($param, $flags, true)) {
+            $env = 'production';
+            continue;
+         }
+
+         $clean[] = $param;
+      }
+      return [$env, $clean];
+   }
+
    private function help(): string {
       return
-         $this->info('APP_ENV', 'light_blue') . "\t\t\t" . get_env('APP_ENV') . "\n" .
          $this->info('[hash]', 'light_blue') . "\t\t\t" . 'hash 123456' . "\n" .
          $this->info('[key]', 'light_blue') . "\t\t\t" . 'key' . "\n" .
          $this->info('[module]', 'light_blue') . "\t\t" . 'module User' . "\n" .
          $this->info('[migration create]', 'light_blue') . "\t" . 'migration create User/Migration' . "\n" .
-         $this->info('[migration run]', 'light_blue') . "\n" .
-         $this->info('[migration rollback]', 'light_blue') . "\n" .
-         $this->info('[migration reset]', 'light_blue') . "\n" .
-         $this->info('[migration refresh]', 'light_blue') . "\n";
+         $this->info('[migration run]', 'light_blue') . "\t\t" . 'migration run OR migration run -p / --production' . "\n" .
+         $this->info('[migration rollback]', 'light_blue') . "\t" . 'migration rollback OR migration rollback -p / --production' . "\n" .
+         $this->info('[migration reset]', 'light_blue') . "\t" . 'migration reset OR migration reset -p / --production' . "\n" .
+         $this->info('[migration refresh]', 'light_blue') . "\t" . 'migration refresh OR migration refresh -p / --production' . "\n";
    }
 
    private function serve(?string $host = null): string {

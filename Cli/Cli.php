@@ -29,6 +29,11 @@ class Cli {
    }
 
    public function run(array $params): string {
+      // Docker ve CLI ortamlarında çıktının hemen görünmesi için output buffering'i kapat
+      if (ob_get_level()) {
+         ob_end_clean();
+      }
+
       [$isProduction, $params] = $this->parseArgs($params);
 
       if (!$isProduction) {
@@ -309,6 +314,13 @@ class Cli {
       }
 
       $colored_string .= $string . "\e[0m";
+
+      // Docker container içinde çıktının hemen görünmesi için flush
+      if (defined('STDOUT')) {
+         fwrite(STDOUT, $colored_string);
+         fflush(STDOUT);
+      }
+
       return $colored_string;
    }
 

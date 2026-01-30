@@ -29,23 +29,18 @@ class Cli {
    }
 
    public function run(array $params): string {
-      // Docker ve CLI ortamlarında çıktının hemen görünmesi için output buffering'i kapat
-      if (ob_get_level()) {
-         ob_end_clean();
-      }
-
       [$isProduction, $params] = $this->parseArgs($params);
 
       if (!$isProduction) {
          putenv('APP_ENV=development');
       }
-      import_env($this->config['env']);
 
       $command = $params[0] ?? null;
       $param1  = $params[1] ?? null;
       $param2  = $params[2] ?? null;
 
       if ($command === 'serve') {
+         import_env($this->config['env']);
          return $this->serve($param1);
       } elseif ($command === 'module') {
          return $this->module($param1);
@@ -54,6 +49,7 @@ class Cli {
       } elseif ($command === 'key') {
          return $this->key();
       } elseif ($command === 'migration' && $param1) {
+         import_env($this->config['env']);
          return $this->migration($param1, $param2);
       } else {
          return $this->help();
@@ -63,7 +59,8 @@ class Cli {
    private function parseArgs(array $params): array {
       $flags = [
          '-p',
-         '--production',
+         '-prod',
+         '-production',
       ];
 
       $env = null;
@@ -86,10 +83,10 @@ class Cli {
          $this->info('[key]', 'light_blue') . "\t\t\t" . 'key' . "\n" .
          $this->info('[module]', 'light_blue') . "\t\t" . 'module User' . "\n" .
          $this->info('[migration create]', 'light_blue') . "\t" . 'migration create User/Migration' . "\n" .
-         $this->info('[migration run]', 'light_blue') . "\t\t" . 'migration run OR migration run -p / --production' . "\n" .
-         $this->info('[migration rollback]', 'light_blue') . "\t" . 'migration rollback OR migration rollback -p / --production' . "\n" .
-         $this->info('[migration reset]', 'light_blue') . "\t" . 'migration reset OR migration reset -p / --production' . "\n" .
-         $this->info('[migration refresh]', 'light_blue') . "\t" . 'migration refresh OR migration refresh -p / --production' . "\n";
+         $this->info('[migration run]', 'light_blue') . "\t\t" . 'migration run OR migration run -p' . "\n" .
+         $this->info('[migration rollback]', 'light_blue') . "\t" . 'migration rollback OR migration rollback -p' . "\n" .
+         $this->info('[migration reset]', 'light_blue') . "\t" . 'migration reset OR migration reset -p' . "\n" .
+         $this->info('[migration refresh]', 'light_blue') . "\t" . 'migration refresh OR migration refresh -p' . "\n";
    }
 
    private function serve(?string $host = null): string {
@@ -314,13 +311,6 @@ class Cli {
       }
 
       $colored_string .= $string . "\e[0m";
-
-      // Docker container içinde çıktının hemen görünmesi için flush
-      if (defined('STDOUT')) {
-         fwrite(STDOUT, $colored_string);
-         fflush(STDOUT);
-      }
-
       return $colored_string;
    }
 

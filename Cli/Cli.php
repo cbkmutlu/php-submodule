@@ -27,7 +27,6 @@ class Cli {
 
       try {
          $config = import_config('defines.app');
-         putenv('APP_ENV=development');
          import_env($config['env']);
       } catch (\Throwable $th) {
          print($this->error($th->getMessage()));
@@ -36,11 +35,14 @@ class Cli {
    }
 
    public function run(array $params): string {
-      $command = $params[0];
+      $command = $params[0] ?? null;
       $param1 = $params[1] ?? null;
       $param2 = $params[2] ?? null;
 
       if ($command === 'serve') {
+         // Override environment for local server
+         putenv('APP_ENV=development');
+         import_env();
          return $this->serve($param1);
       } else if ($command === 'module') {
          return $this->module($param1);

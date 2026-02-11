@@ -20,7 +20,7 @@ class Database {
    private $table;
    private $debug;
 
-   public function connect(?string $connection = null): self {
+   public function connect(?string $connection = null, bool $name = true): self {
       $config = import_config('defines.database');
       $attr = [
          PDO::ATTR_PERSISTENT         => $config['persistent'],
@@ -39,13 +39,14 @@ class Database {
 
       if ($config['db_driver'] === 'mysql' || $config['db_driver'] === 'pgsql') {
          $port = $config['db_port'] !== '' ? "port={$config['db_port']};" : '';
-         $dsn = "{$config['db_driver']}:host={$config['db_host']};{$port}dbname={$config['db_name']}";
-      } elseif ($config['db_driver'] === 'sqlite') {
-         $dsn = "sqlite:{$config['db_name']}";
-      } elseif ($config['db_driver'] === 'oracle') {
-         $dsn = "oci:dbname={$config['db_host']}:{$config['db_port']}/{$config['db_service_name']}";
+         $name = $name ? "dbname={$config['db_name']};" : '';
+         $dsn = sprintf("%s:host=%s;%s%s", $config['db_driver'], $config['db_host'], $port, $name);
       } elseif ($config['db_driver'] === 'mssql') {
-         $dsn = "sqlsrv:Server={$config['db_host']},{$config['db_port']};Database={$config['db_name']}";
+         $port = $config['db_port'] !== '' ? ",{$config['db_port']}" : '';
+         $name = $name ? "Database={$config['db_name']}" : 'master';
+         $dsn = sprintf("sqlsrv:Server=%s%s;%s", $config['db_host'], $port, $name);
+      } elseif ($config['db_driver'] === 'sqlite') {
+         $dsn = sprintf("sqlite:%s", $config['db_name']);
       }
 
       try {
@@ -60,9 +61,9 @@ class Database {
       return $this;
    }
 
-   public function pdo(): PDO {
+   public function pdo(bool $name = true): PDO {
       if (!$this->pdo) {
-         $this->connect();
+         $this->connect(null, $name);
       }
 
       return $this->pdo;

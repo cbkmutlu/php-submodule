@@ -5,25 +5,29 @@ declare(strict_types=1);
 namespace System\Upload;
 
 use System\Language\Language;
-use System\Exception\SystemException;
+use System\Container\Container;
+use System\Upload\UploadException;
 
-interface UploadAdapter {
+interface UploadInterface {
    /**
-    * @param array $file $_FILES dizisi
-    * @param string $path Defines'daki upload path (örn: Public/upload)
-    * @param string $name Yeni dosya adı (örn: 123456789.jpg)
-    * @param string $dir Dosyanın yükleneceği dizin (örn: users)
+    * Dosyayı depolama alanına yükler
     *
-    * @return bool Dosya yükleme işlemi başarılıysa `true` döner
+    * @param array $file Yüklenen dosya dizisi ($_FILES formatında)
+    * @param string $name Yeni dosya adı (uzantı ile birlikte)
+    * @param string $path Ana yükleme yolu (örn: 'public/uploads')
+    * @param string|null $dir Opsiyonel alt dizin (örn: 'products/2024')
+    * @return string Dosya yolu (örn: '2024/image.jpg')
+    * @throws UploadException Yükleme başarısız olursa
     */
    public function upload(array $file, string $name, string $path, ?string $dir = null): string;
 
    /**
-    * @param string|array $files Dosya adı veya dosya adı dizisi
-    * @param string $path Defines'daki upload path (örn: Public/upload)
-    * @param string $dir Dosyanın silineceği dizin (örn: users)
+    * Dosyayı depolama alanından siler
     *
-    * @return bool Dosya silme işlemi başarılıysa `true` döner
+    * @param string $file Dosya yolu (örn: '2024/image.jpg')
+    * @param string $path Ana yükleme yolu (örn: 'public/uploads')
+    * @return bool Başarıyla silinirse true döner
+    * @throws UploadException Silme başarısız olursa
     */
    public function unlink(string $file, string $path): bool;
 }
@@ -40,17 +44,21 @@ class Upload {
    private array $error = [];
    private string $path;
    private ?string $dir = null;
-   private UploadAdapter $adapter;
+   private UploadInterface $handler;
 
    public function __construct(
-      private Language $language
+      private Language $language,
+      private Container $container
    ) {
-      $config              = import_config('defines.upload');
-      $default             = $config['default'];
-      $this->adapter       = new $config[$default]['adapter']();
-      $this->path          = $config[$default]['path'] ?? $config['path'];
-      $this->allowed_types = $config[$default]['allowed_types'] ?? $config['allowed_types'];
-      $this->allowed_mimes = $config[$default]['allowed_mimes'] ?? $config['allowed_mimes'];
+      $config  = import_config('defines.upload');
+      $default = $config['default'];
+      $handler = $config['providers'][$default];
+
+      // use resolveClass method instead of new $handler['handler']() for dependency injection
+      $this->handler       = $this->container->resolveClass($handler['handler']);
+      $this->path          = $handler['path'] ?? $config['path'];
+      $this->allowed_types = $handler['allowed_types'] ?? $config['allowed_types'];
+      $this->allowed_mimes = $handler['allowed_mimes'] ?? $config['allowed_mimes'];
    }
 
    public function handle(array $files, ?callable $setName = null): array {
@@ -96,11 +104,11 @@ class Upload {
             $name = bin2hex(random_bytes(16)) . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
          }
 
-         $result[] = $this->adapter->upload($file, $name, $this->path, $this->dir);
+         $result[] = $this->handler->upload($file, $name, $this->path, $this->dir);
       }
 
       if (empty($result) && !empty($this->error)) {
-         throw new SystemException(json_encode($this->error, JSON_UNESCAPED_UNICODE), 400);
+         throw new UploadException(json_encode($this->error, JSON_UNESCAPED_UNICODE), 400);
       }
 
       return $result;
@@ -114,7 +122,7 @@ class Upload {
             continue;
          }
 
-         $this->adapter->unlink($file, $this->path);
+         $this->handler->unlink($file, $this->path);
       }
 
       return true;
@@ -125,8 +133,8 @@ class Upload {
    }
 
 
-   public function setAdapter(UploadAdapter $adapter): self {
-      $this->adapter = $adapter;
+   public function setHandler(UploadInterface $handler): self {
+      $this->handler = $handler;
       return $this;
    }
 

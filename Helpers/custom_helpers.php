@@ -232,7 +232,8 @@ if (!function_exists('import_asset')) {
 
 if (!function_exists('import_config')) {
    function import_config(string $params): array {
-      [$file, $value] = explode('.', $params, 2);
+      $segments = explode('.', $params);
+      $file = array_shift($segments);
       $path = APP_DIR . 'Config/' . ucfirst($file) . '.php';
 
       if (!is_file($path)) {
@@ -240,16 +241,17 @@ if (!function_exists('import_config')) {
       }
 
       $config = require $path;
-
       if (!is_array($config)) {
          throw new SystemException('Config file [' . $path . '] must return an array');
       }
 
-      $keys = explode('.', $value);
+      if (empty($segments)) {
+         return $config;
+      }
 
-      foreach ($keys as $key) {
-         if (!isset($config[$key])) {
-            throw new SystemException('Invalid [' . $key . '] key');
+      foreach ($segments as $key) {
+         if (!array_key_exists($key, $config)) {
+            throw new SystemException('Invalid [' . $key . '] key in [' . $params . ']');
          }
          $config = $config[$key];
       }

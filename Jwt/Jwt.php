@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace System\Jwt;
 
+use Exception;
 use System\Jwt\JwtException;
 use System\Exception\SystemException;
 
@@ -82,7 +83,7 @@ class Jwt {
       try {
          $header = json_decode($this->base64Decode($headerEncoded), true, 512, JSON_THROW_ON_ERROR);
          $payload = json_decode($this->base64Decode($payloadEncoded), true, 512, JSON_THROW_ON_ERROR);
-      } catch (\Exception $e) {
+      } catch (Exception $e) {
          throw new JwtException('Invalid token encoding', 401);
       }
       $signature = $this->base64Decode($signatureEncoded);

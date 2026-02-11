@@ -8,6 +8,7 @@ use Egulias\EmailValidator\EmailValidator;
 use Egulias\EmailValidator\Validation\RFCValidation;
 use Egulias\EmailValidator\Validation\DNSCheckValidation;
 use Egulias\EmailValidator\Validation\MultipleValidationWithAnd;
+use Exception;
 
 /**
  * Data validation class
@@ -481,7 +482,7 @@ class Validation {
 
       try {
          return $validator->isValid($value, new MultipleValidationWithAnd($validations));
-      } catch (\Exception $e) {
+      } catch (Exception $e) {
          return !in_array('dns', $params);
       }
    }
@@ -801,7 +802,7 @@ class Validation {
       try {
          date_create($value);
          return true;
-      } catch (\Exception $e) {
+      } catch (Exception $e) {
          return false;
       }
    }

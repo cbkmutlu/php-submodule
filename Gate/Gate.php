@@ -6,16 +6,36 @@ namespace System\Gate;
 
 use App\Core\Abstracts\Policy;
 use System\Cache\Cache;
+use System\Container\Container;
 use System\Http\Request;
-use System\Database\Database;
 use System\Gate\GateException;
 
+interface GateInterface {
+   /**
+    * Belirtilen kullanıcının yetki ve erişim verilerini yükler.
+    *
+    * @param int $userId Yetki verileri yüklenecek kullanıcının kimliği.
+    * @return array Kullanıcıya ait izin ve rol bilgilerini içeren dizi.
+    */
+   public function getPermission(int $userId): array;
+}
+
 class Gate {
+   private int $expire;
+   private GateInterface $handler;
+
    public function __construct(
+      private Container $container,
       private Request $request,
-      private Database $database,
-      private Cache $cache
+      private Cache $cache,
    ) {
+      $config  = import_config('defines.gate');
+      $default = $config['default'];
+      $handler = $config['providers'][$default];
+
+      // use resolveClass method instead of new $handler['handler']() for dependency injection
+      $this->handler = $this->container->resolveClass($handler['handler']);
+      $this->expire  = $handler['cache_expire'] ?? $config['cache_expire'];
    }
 
    /**
@@ -97,101 +117,29 @@ class Gate {
     * Resolve user with roles and permissions for given context
     */
    private function resolveUser(array $context = []): ?array {
-      $jwtUser = $this->request->getUser();
-
-      if (empty($jwtUser) || !isset($jwtUser['id'])) {
+      $user = $this->request->getUser();
+      if (empty($user) || !isset($user['id'])) {
          return null;
       }
 
-      $userId = (int) $jwtUser['id'];
-
-      // Simplified cache key (one per user, contains all scopes)
+      $userId = (int) $user['id'];
       $cacheKey = $this->getCacheKey($userId);
-
       $cached = $this->cache->get($cacheKey);
       if ($cached) {
-         return $this->filterUserByContext($cached, $context);
+         return $this->filterContext($cached, $context);
       }
 
-      // Load roles and permissions for user
-      $data = $this->loadUserData($userId);
+      $data = $this->handler->getPermission($userId);
+      $this->cache->set($cacheKey, $data, $this->expire);
 
-      // Cache set
-      $expire = (int) import_config('defines.gate')['cache_expire'];
-      $this->cache->set($cacheKey, $data, $expire);
-
-      return $this->filterUserByContext($data, $context);
-   }
-
-   /**
-    * Load all user roles and permissions in one go
-    */
-   private function loadUserData(int $userId): array {
-      $data = [
-         'id' => $userId,
-         'roles' => [],
-         'permissions' => []
-      ];
-
-      /*
-     |--------------------------------------------------------------------------
-     | Roles (NO permission join)
-     |--------------------------------------------------------------------------
-     */
-      $roles = $this->database
-         ->prepare("SELECT r.id, r.name, r.slug, ur.scope_type, ur.scope_id
-            FROM app_user_role ur
-            JOIN app_role r ON r.id = ur.role_id
-            WHERE ur.user_id = :user_id
-         ")
-         ->execute(['user_id' => $userId])
-         ->fetchAll();
-
-      $data['roles'] = $roles;
-
-      /*
-     |--------------------------------------------------------------------------
-     | Permissions from roles (no cartesian explosion)
-     |--------------------------------------------------------------------------
-     */
-      $rolePermissions = $this->database
-         ->prepare("SELECT p.id, p.name, p.slug, 'allow' AS type, ur.scope_type, ur.scope_id, 'role' AS source
-            FROM app_user_role ur
-            JOIN app_role_permission rp ON rp.role_id = ur.role_id
-            JOIN app_permission p ON p.id = rp.permission_id
-            WHERE ur.user_id = :user_id
-         ")
-         ->execute(['user_id' => $userId])
-         ->fetchAll();
-
-      /*
-     |--------------------------------------------------------------------------
-     | Direct permissions
-     |--------------------------------------------------------------------------
-     */
-      $directPermissions = $this->database
-         ->prepare("SELECT p.id, p.name, p.slug, up.type, up.scope_type, up.scope_id, 'direct' AS source
-            FROM app_user_permission up
-            JOIN app_permission p ON p.id = up.permission_id
-            WHERE up.user_id = :user_id
-         ")
-         ->execute(['user_id' => $userId])
-         ->fetchAll();
-
-
-      $data['permissions'] = [
-         ...$rolePermissions,
-         ...$directPermissions
-      ];
-
-      return $data;
+      return $this->filterContext($data, $context);
    }
 
    /**
     * Filter loaded user data based on current context/scope
     * This recreates the exact structure expected by Policies
     */
-   private function filterUserByContext(array $data, array $context): array {
+   private function filterContext(array $data, array $context): array {
       $scopeType = $context['scope_type'] ?? null;
       $scopeId = $context['scope_id'] ?? null;
 

@@ -59,6 +59,8 @@ class Cli {
       } elseif (($command === 'database' || $command === 'db') && $param1) {
          import_env($this->config['env']);
          return $this->database($param1);
+      } elseif (($command === 'remove' || $command === 'rm') && $param1) {
+         return $this->remove($param1);
       } else {
          return $this->help();
       }
@@ -100,7 +102,9 @@ class Cli {
          $this->info('database create', 'light_blue') . "\t\t\t" . 'Create database from .env' . "\t" . '(db create -p for production)' . "\n" .
          $this->info('database drop', 'light_blue') . "\t\t\t" . 'Drop database if exists' . "\t\t" . '(db drop -p for production)' . "\n" .
          $this->info('database refresh', 'light_blue') . "\t\t" . 'Drop and create database' . "\t" . '(db refresh -p for production)' . "\n" .
-         $this->info('database seed', 'light_blue') . "\t\t\t" . 'Run database seeders' . "\t\t" . '(db seed -p for production)' . "\n";
+         $this->info('database seed', 'light_blue') . "\t\t\t" . 'Run database seeders' . "\t\t" . '(db seed -p for production)' . "\n\n" .
+         $this->info('remove cache', 'light_blue') . "\t\t\t" . 'Remove cache (Storage/Cache)' . "\t" . '(rm cache)' . "\n" .
+         $this->info('remove log', 'light_blue') . "\t\t\t" . 'Remove log (Storage/Logs)' . "\t" . '(rm log)' . "\n";
    }
 
    private function serve(?string $host = null): string {
@@ -359,19 +363,41 @@ class Cli {
       return $this->success('✓ Database seeding completed (' . $count . ' seeders)');
    }
 
-   private function success(string $message): string {
+   private function remove(string $type): string {
+      if ($type === 'cache') {
+         foreach (glob(APP_DIR . 'Storage/Cache/*') as $file) {
+            if (is_file($file)) {
+               unlink($file);
+            }
+         }
+
+         return $this->success('✓ Cache files removed');
+      } elseif ($type === 'log') {
+         foreach (glob(APP_DIR . 'Storage/Logs/*') as $file) {
+            if (is_file($file)) {
+               unlink($file);
+            }
+         }
+
+         return $this->success('✓ Log files removed');
+      } else {
+         return $this->error('✗ Invalid remove type');
+      }
+   }
+
+   private function success(mixed $message): string {
       return $this->write($message, 'light_green');
    }
 
-   private function error(string $message): string {
+   private function error(mixed $message): string {
       return $this->write($message, 'light_red');
    }
 
-   private function info(string $message): string {
+   private function info(mixed $message): string {
       return $this->write($message, 'light_blue');
    }
 
-   private function write(string $string, ?string $color = null): string {
+   private function write(mixed $string, ?string $color = null): string {
       $colored_string = '';
 
       if (isset($this->colors[$color])) {

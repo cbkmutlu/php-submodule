@@ -123,14 +123,20 @@ class Gate {
       }
 
       $userId = (int) $user['id'];
-      $cacheKey = $this->getCacheKey($userId);
-      $cached = $this->cache->get($cacheKey);
-      if ($cached) {
-         return $this->filterContext($cached, $context);
+
+      if ($this->expire > 0) {
+         $cacheKey = $this->getCacheKey($userId);
+         $cached = $this->cache->get($cacheKey);
+         if ($cached) {
+            return $this->filterContext($cached, $context);
+         }
       }
 
       $data = $this->handler->getPermission($userId);
-      $this->cache->set($cacheKey, $data, $this->expire);
+
+      if ($this->expire > 0) {
+         $this->cache->set($cacheKey, $data, $this->expire);
+      }
 
       return $this->filterContext($data, $context);
    }

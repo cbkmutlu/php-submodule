@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace System\Exception;
 
-use Throwable;
+use System\Http\{Request, Response};
 use ErrorException;
-use System\Http\Request;
-use System\Http\Response;
-
-use Whoops\Run as WhoopsRun;
-use Whoops\Handler\PrettyPageHandler as WhoopsPrettyPageHandler;
+use Throwable;
+use Whoops\Handler\PrettyPageHandler;
+use Whoops\Run;
 
 class ExceptionHandler {
    public function __construct(
@@ -102,8 +100,8 @@ class ExceptionHandler {
       header('Content-Type: text/html; charset=UTF-8');
 
       if (get_env('APP_ENV') === 'development') {
-         $whoops = new WhoopsRun;
-         $whoops->pushHandler(new WhoopsPrettyPageHandler);
+         $whoops = new Run;
+         $whoops->pushHandler(new PrettyPageHandler);
          $whoops->register();
          $whoops->sendHttpCode($code);
          throw $exception;

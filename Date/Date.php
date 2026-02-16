@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace System\Date;
 
-use DateTime;
+use System\Exception\SystemException;
+use System\Language\Language;
 use DateTimeZone;
 use IntlDateFormatter;
-use System\Language\Language;
-use System\Exception\SystemException;
 
 class Date {
    const ATOM     = "yyyy-MM-dd'T'HH:mm:ssXXX";     // 2014-02-21T20:55:30+02:00
@@ -35,7 +34,7 @@ class Date {
    private $pattern;
    private $formatter;
 
-   /** @var DateTime */
+   /** @var \DateTime */
    private $datetime;
 
    public function __construct(

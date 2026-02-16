@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace System\Upload;
 
-use System\Language\Language;
 use System\Container\Container;
+use System\Language\Language;
 use System\Upload\UploadException;
 
 interface UploadInterface {

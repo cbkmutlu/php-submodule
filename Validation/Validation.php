@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace System\Validation;
 
 use Egulias\EmailValidator\EmailValidator;
-use Egulias\EmailValidator\Validation\RFCValidation;
-use Egulias\EmailValidator\Validation\DNSCheckValidation;
-use Egulias\EmailValidator\Validation\MultipleValidationWithAnd;
+use Egulias\EmailValidator\Validation\{DNSCheckValidation, MultipleValidationWithAnd, RFCValidation};
 use Exception;
 
 /**

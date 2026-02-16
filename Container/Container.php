@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace System\Container;
 
+use System\Exception\SystemException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
-use System\Exception\SystemException;
 
 class Container {
    private $providers;

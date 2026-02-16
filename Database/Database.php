@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace System\Database;
 
+use System\Database\DatabaseException;
 use PDO;
 use PDOException;
 use PDOStatement;
-use System\Database\DatabaseException;
 
 class Database {
    private ?PDO $pdo = null;

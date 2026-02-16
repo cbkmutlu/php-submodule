@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace System\Gate;
 
-use App\Core\Abstracts\Policy;
 use System\Cache\Cache;
 use System\Container\Container;
-use System\Http\Request;
 use System\Gate\GateException;
+use System\Http\Request;
+use App\Core\Abstracts\Policy;
 
 interface GateInterface {
    /**

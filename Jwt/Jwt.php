@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace System\Jwt;
 
-use Exception;
-use System\Jwt\JwtException;
 use System\Exception\SystemException;
+use System\Jwt\JwtException;
+use Exception;
 
 class Jwt {
    private $secret;

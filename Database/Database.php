@@ -228,41 +228,29 @@ class Database {
       return $this;
    }
 
-   public function fetchAll(?string $fetch = null, mixed $args = null, bool $all = true): mixed {
-      try {
-         if ($fetch !== null) {
-            $mode = 'PDO::' . $fetch;
-            if (!defined($mode)) {
-               throw new DatabaseException("Invalid fetch mode: $mode");
-            }
-
-            $constant = constant($mode);
-            if (($constant === PDO::FETCH_CLASS || $constant === PDO::FETCH_COLUMN) && $args !== null) {
-               $this->state->setFetchMode($constant, $args);
-            } else {
-               $this->state->setFetchMode($constant);
-            }
-         }
-
-         return $all ? $this->state->fetchAll() : $this->state->fetch();
-      } catch (PDOException $e) {
-         throw new DatabaseException('Database Fetch Error: ' . $e->getMessage());
-      }
+   public function fetchAll(): array {
+      return $this->state->fetchAll();
    }
 
-   public function fetch(?string $fetch = null, mixed $args = null): mixed {
-      return $this->fetchAll($fetch, $args, false);
+   public function fetchOne(): mixed {
+      $result = $this->state->fetch();
+      return $result === false ? null : $result;
+   }
+
+   public function fetchColumn(int $index = 0): mixed {
+      $result = $this->state->fetchColumn($index);
+      return $result === false ? null : $result;
    }
 
    public function lastInsertId(): int {
       return (int) $this->pdo()->lastInsertId();
    }
 
-   public function lastInsertRow(?string $table = null): mixed {
+   public function lastInsertRow(?string $table = null, string $primaryKey = 'id'): mixed {
       $table = $table ?? $this->table;
-      $result = $this->query("SELECT * FROM {$this->prefix}{$table} WHERE id=" . $this->lastInsertId());
+      $result = $this->query("SELECT * FROM {$this->prefix}{$table} WHERE {$primaryKey}=" . $this->lastInsertId());
 
-      return $result->fetch();
+      return $result->fetchOne();
    }
 
    public function lastQuery(): string {
@@ -343,18 +331,13 @@ class Database {
 
                // key => ['IN', [value]]
                if (is_array($value[1])) {
-                  $escape = [];
-                  foreach ($value[1] as $column) {
-                     $escape[] = $this->escape($column);
-                  }
-                  $escape = implode(',', $escape);
-
-                  $conditions[] = "`{$key}` IN ({$escape})";
+                  $columns = implode(',', $value[1]);
+                  $conditions[] = "`{$key}` IN ({$columns})";
                }
 
                // key => ['IN', value]
                else {
-                  $conditions[] = "`{$key}` IN ({$this->escape($value[1])})";
+                  $conditions[] = "`{$key}` IN ({$value[1]})";
                }
             }
 

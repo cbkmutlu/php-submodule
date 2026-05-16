@@ -5,14 +5,14 @@ declare(strict_types=1);
 use App\Core\Abstracts\Migration;
 
 class {class} extends Migration {
-   public function up() {
-      $this->database->query("CREATE TABLE IF NOT EXISTS `{class}` (
-         `id` INT AUTO_INCREMENT PRIMARY KEY,
-         {$this->defaults()}
-      )");
-   }
+    public function up() {
+        $this->database->query("CREATE TABLE IF NOT EXISTS `{class}` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            {$this->defaults()}
+        )");
+    }
 
-   public function down() {
-      $this->database->query("DROP TABLE IF EXISTS `{class}`");
-   }
+    public function down() {
+        $this->database->query("DROP TABLE IF EXISTS `{class}`");
+    }
 }

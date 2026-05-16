@@ -7,40 +7,40 @@ namespace System\Event;
 use System\Exception\SystemException;
 
 class Event {
-   private $action = 'handle';
-   private $params;
-   private $listeners;
+    private string $action = 'handle';
+    private array $params = [];
+    private array $listeners = [];
 
-   public function listener(string $event): self {
-      $listeners = import_config('defines.listeners');
-      $this->listeners = $listeners[$event];
+    public function listener(string $event): self {
+        $listeners = import_config('defines.listeners');
+        $this->listeners = $listeners[$event];
 
-      return $this;
-   }
+        return $this;
+    }
 
-   public function action(string $action): self {
-      $this->action = $action;
+    public function action(string $action): self {
+        $this->action = $action;
 
-      return $this;
-   }
+        return $this;
+    }
 
-   public function params(array $params): self {
-      $this->params = $params;
+    public function params(array $params): self {
+        $this->params = $params;
 
-      return $this;
-   }
+        return $this;
+    }
 
-   public function fire(): void {
-      foreach ($this->listeners as $listener) {
-         if (!class_exists($listener)) {
-            throw new SystemException('Listener [' . $listener . '] not found');
-         }
+    public function fire(): void {
+        foreach ($this->listeners as $listener) {
+            if (!class_exists($listener)) {
+                throw new SystemException('Listener [' . $listener . '] not found');
+            }
 
-         if (!method_exists($listener, $this->action)) {
-            throw new SystemException('Method [' . $this->action . '] not found in ' . $listener);
-         }
+            if (!method_exists($listener, $this->action)) {
+                throw new SystemException('Method [' . $this->action . '] not found in ' . $listener);
+            }
 
-         call_user_func_array([new $listener, $this->action], $this->params);
-      }
-   }
+            call_user_func_array([new $listener, $this->action], $this->params);
+        }
+    }
 }

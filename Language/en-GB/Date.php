@@ -18,5 +18,5 @@ return [
     'x_hour'        => '%shour(s)',
     'x_minute'      => '%sminute(s)',
     'x_second'      => '%ssecond(s)',
-    'x_millisecond' => '%smillisecond(s)',
+    'x_millisecond' => '%smillisecond(s)'
 ];

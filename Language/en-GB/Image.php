@@ -12,5 +12,5 @@ return [
     'invalid_image'       => 'Invalid image.',
     'invalid_image_file'  => 'Invalid image file or imagecreate function not enabled.',
     'invalid_destination' => 'Invalid destination directory.',
-    'headers_sent'        => 'Headers already sent.',
+    'headers_sent'        => 'Headers already sent.'
 ];

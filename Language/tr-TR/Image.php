@@ -12,5 +12,5 @@ return [
     'invalid_image'       => 'Geçersiz imaj.',
     'invalid_image_file'  => 'Geçersiz imaj dosyası veya imagecreate fonksiyonu aktif değil.',
     'invalid_destination' => 'Geçersiz hedef dizini.',
-    'headers_sent'        => 'Başlık zaten gönderildi.',
+    'headers_sent'        => 'Başlık zaten gönderildi.'
 ];

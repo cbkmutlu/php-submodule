@@ -70,7 +70,7 @@ class Cli {
         $flags = [
             '-p',
             '-prod',
-            '-production',
+            '-production'
         ];
 
         $env = null;
@@ -344,6 +344,7 @@ class Cli {
         foreach ($files as $file) {
             require_once $file;
             $className = basename($file, '.php');
+            $className = substr($className, 3); // remove 01_ prefix
             $class = 'App\\Seeds\\' . $className;
 
             if (class_exists($class)) {

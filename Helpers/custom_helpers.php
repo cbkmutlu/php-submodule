@@ -300,6 +300,12 @@ if (!function_exists('get_env')) {
         }
 
         $value = trim($value);
+
+        // Inline comment
+        if (str_contains($value, '#')) {
+            $value = trim(explode('#', $value, 2)[0]);
+        }
+
         return match (true) {
             $value === 'true'  => true,
             $value === 'false' => false,

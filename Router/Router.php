@@ -182,7 +182,7 @@ class Router {
         array_shift($params);
         $callback = function () use ($route, $params) {
             if (is_callable($route['callback'])) {
-                call_user_func_array($route['callback'], array_values($params));
+                return call_user_func_array($route['callback'], array_values($params));
             } elseif (is_array($route['callback'])) {
                 [$controller, $method] = $route['callback'];
                 if (!class_exists($controller)) {
@@ -194,7 +194,7 @@ class Router {
                 $instance = $this->container->resolveClass($controller);
                 // $args = $this->container->resolveMethod($instance, $method, $params);
                 // $instance->$method(...$args);
-                call_user_func_array([$instance, $method], array_values($params));
+                return call_user_func_array([$instance, $method], array_values($params));
             } else {
                 throw new RouterException('Invalid route callback');
             }
@@ -213,7 +213,10 @@ class Router {
             }
         }
 
-        $next();
+        $response = $next();
+        if (is_string($response)) {
+            echo $response;
+        }
     }
 
     public function error(callable $callback): void {

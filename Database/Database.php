@@ -28,7 +28,7 @@ class Database {
             PDO::ATTR_ERRMODE            => $config['error_mode'],
             PDO::ATTR_DEFAULT_FETCH_MODE => $config['fetch_mode'],
             PDO::ATTR_STRINGIFY_FETCHES  => $config['stringify'],
-            PDO::MYSQL_ATTR_FOUND_ROWS   => $config['update_rows']
+            Pdo\Mysql::ATTR_FOUND_ROWS   => $config['update_rows']
         ];
         $connection = $connection ?? $config['default'];
         $config = $config['connections'][$connection];
